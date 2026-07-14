@@ -104,6 +104,23 @@
   .target-row label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
   .target-row span.unit{font-size:12px; color:var(--muted);}
 
+  .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .meta-field{flex:1; min-width:130px;}
+  .meta-field label{display:block; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;}
+  .meta-field input{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 10px; border-radius:10px; font-size:16px;}
+
+  .save-status{font-size:12px; color:var(--muted); align-self:center;}
+  .lib-status{font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .muted-note{color:var(--muted); font-size:14px;}
+
+  .class-card{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .class-card-date{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
+  .class-card-name{font-family:var(--serif); font-size:17px; margin:2px 0;}
+  .class-card-meta{font-size:12px; color:var(--muted);}
+  .class-card-actions{display:flex; gap:6px; flex-wrap:wrap;}
+
   .total-bar{position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
     padding:10px 16px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted);}
   .total-bar b{color:var(--text); font-size:16px;}
@@ -160,6 +177,7 @@
     <div class="tabs">
       <div class="tab active" id="tabEditor" onclick="showScreen('editor')">Build</div>
       <div class="tab" id="tabRun" onclick="showScreen('run')">Run Class</div>
+      <div class="tab" id="tabLibrary" onclick="showScreen('library')">My Classes</div>
     </div>
   </header>
 
@@ -168,10 +186,30 @@
     <div id="screenEditor">
       <input class="workout-name" id="workoutName" value="7.7.26 IRON 45 — Push Pull Carry" oninput="onNameChange()">
 
+      <div class="meta-row">
+        <div class="meta-field">
+          <label for="classDate">Date</label>
+          <input type="date" id="classDate" onchange="setMeta('date', this.value)">
+        </div>
+        <div class="meta-field">
+          <label for="classMuscleGroup">Muscle group</label>
+          <input type="text" id="classMuscleGroup" placeholder="e.g. Posterior Chain" onchange="setMeta('muscleGroup', this.value)">
+        </div>
+        <div class="meta-field">
+          <label for="classInstructor">Instructor</label>
+          <input type="text" id="classInstructor" placeholder="e.g. Sydney" onchange="setMeta('instructor', this.value)">
+        </div>
+      </div>
+
       <div class="target-row">
         <label for="targetMinutes">Target length</label>
         <input class="rounds-input" id="targetMinutes" type="number" min="1" value="45" onchange="setTargetMinutes(this.value)">
         <span class="unit">min</span>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn good" onclick="saveClass()">💾 Save Class</button>
+        <span class="save-status" id="saveStatus"></span>
       </div>
 
       <div class="toolbar">
@@ -229,6 +267,15 @@
         </div>
       </div>
     </div>
+
+    <!-- LIBRARY -->
+    <div id="screenLibrary" class="hidden">
+      <div class="toolbar">
+        <button class="btn" onclick="refreshLibrary()">↻ Refresh</button>
+      </div>
+      <div class="lib-status" id="libraryStatus"></div>
+      <div id="libraryList"></div>
+    </div>
   </main>
 
   <div class="total-bar" id="totalBar">
@@ -249,6 +296,7 @@
    - Total time per step = sets x (work + rest). Total per block = rounds x sum(steps).
 --------------------------------------------------------- */
 let workout = null;
+let library = [];
 const STORAGE_KEY = 'altarClassTimerWorkout_v1';
 
 const SAMPLE = {
@@ -312,6 +360,10 @@ function ensureIds(w){
     });
   });
   if(w.targetMinutes == null) w.targetMinutes = 45;
+  if(w.date == null) w.date = new Date().toISOString().slice(0,10);
+  if(w.muscleGroup == null) w.muscleGroup = '';
+  if(w.instructor == null) w.instructor = 'Sydney';
+  if(w.id === undefined) w.id = null;
   return w;
 }
 
@@ -341,6 +393,12 @@ function load(){
 --------------------------------------------------------- */
 function renderEditor(){
   document.getElementById('workoutName').value = workout.name;
+  const dateInput = document.getElementById('classDate');
+  if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
+  const mgInput = document.getElementById('classMuscleGroup');
+  if(document.activeElement !== mgInput) mgInput.value = workout.muscleGroup || '';
+  const instrInput = document.getElementById('classInstructor');
+  if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
   const targetInput = document.getElementById('targetMinutes');
   if(document.activeElement !== targetInput) targetInput.value = workout.targetMinutes || 45;
 
@@ -471,6 +529,7 @@ function removeStep(bi, si){
   save(); renderEditor();
 }
 function onNameChange(){ workout.name = document.getElementById('workoutName').value; save(); }
+function setMeta(field, val){ workout[field] = val; save(); }
 function loadSample(){
   if(workout.blocks.length && !confirm('Replace current workout with the sample class?')) return;
   workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
@@ -531,10 +590,115 @@ function updateTotalBar(){
 function showScreen(which){
   document.getElementById('tabEditor').classList.toggle('active', which==='editor');
   document.getElementById('tabRun').classList.toggle('active', which==='run');
+  document.getElementById('tabLibrary').classList.toggle('active', which==='library');
   document.getElementById('screenEditor').classList.toggle('hidden', which!=='editor');
   document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
-  document.getElementById('totalBar').classList.toggle('hidden', which==='run' && running);
+  document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
+  document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
   if(which==='run'){ prepareRunSummary(); }
+  if(which==='library'){ refreshLibrary(); }
+}
+
+/* ---------------------------------------------------------
+   CLASS LIBRARY (saved to the cloud via /api/classes so any
+   device opening this same site sees the same saved classes)
+--------------------------------------------------------- */
+async function saveClass(){
+  if(!workout.id) workout.id = uid();
+  workout.updatedAt = new Date().toISOString();
+  save();
+  const statusEl = document.getElementById('saveStatus');
+  if(statusEl) statusEl.textContent = 'Saving…';
+  try{
+    const res = await fetch('/api/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(workout)
+    });
+    if(!res.ok) throw new Error('bad status');
+    if(statusEl) statusEl.textContent = 'Saved ✓ — visible on any device under My Classes';
+    const idx = library.findIndex(c => c.id === workout.id);
+    const copy = JSON.parse(JSON.stringify(workout));
+    if(idx >= 0) library[idx] = copy; else library.unshift(copy);
+  }catch(e){
+    if(statusEl) statusEl.textContent = 'Could not reach cloud storage — check connection and try again.';
+  }
+}
+
+async function refreshLibrary(){
+  const statusEl = document.getElementById('libraryStatus');
+  if(statusEl) statusEl.textContent = 'Loading…';
+  try{
+    const res = await fetch('/api/classes');
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    library = data.classes || [];
+    if(statusEl) statusEl.textContent = '';
+  }catch(e){
+    if(statusEl) statusEl.textContent = 'Could not reach cloud storage.';
+  }
+  renderLibrary();
+}
+
+function renderLibrary(){
+  const wrap = document.getElementById('libraryList');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  if(!library.length){
+    wrap.innerHTML = '<p class="muted-note">No saved classes yet. Build one in the Build tab, then tap Save Class.</p>';
+    return;
+  }
+  const sorted = [...library].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  sorted.forEach(cls => {
+    const card = document.createElement('div');
+    card.className = 'class-card';
+    card.innerHTML = `
+      <div class="class-card-main">
+        <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
+        <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
+        <div class="class-card-meta">${escapeAttr(cls.muscleGroup || '—')} · ${escapeAttr(cls.instructor || '—')}</div>
+      </div>
+      <div class="class-card-actions">
+        <button class="btn small" onclick="loadClass('${cls.id}')">Load</button>
+        <button class="btn small ghost" onclick="duplicateClass('${cls.id}')">Duplicate</button>
+        <button class="btn small danger" onclick="deleteClass('${cls.id}')">Delete</button>
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+function loadClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  if(workout && workout.blocks && workout.blocks.length && !confirm('Load "' + cls.name + '"? This replaces what you\'re currently building.')) return;
+  workout = ensureIds(JSON.parse(JSON.stringify(cls)));
+  save();
+  renderEditor();
+  showScreen('editor');
+}
+
+function duplicateClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  const copy = JSON.parse(JSON.stringify(cls));
+  copy.id = uid();
+  copy.name = (copy.name || 'Untitled class') + ' (copy)';
+  workout = ensureIds(copy);
+  save();
+  renderEditor();
+  showScreen('editor');
+}
+
+async function deleteClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  if(!confirm('Delete "' + cls.name + '"? This cannot be undone.')) return;
+  try{
+    await fetch('/api/classes?id=' + encodeURIComponent(id), { method: 'DELETE' });
+  }catch(e){}
+  library = library.filter(c => c.id !== id);
+  renderLibrary();
 }
 
 /* ---------------------------------------------------------
@@ -767,6 +931,7 @@ function endRun(){
 (function init(){
   workout = ensureIds(load() || JSON.parse(JSON.stringify(SAMPLE)));
   renderEditor();
+  refreshLibrary();
 })();
 </script>
 </body>
