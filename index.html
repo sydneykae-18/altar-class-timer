@@ -36,10 +36,10 @@
   header h1{font-size:22px; margin:0; letter-spacing:.04em; font-family:var(--serif); font-weight:400; flex:0 0 auto;}
   header h1 span{color:var(--muted); font-family:var(--sans); font-size:11px; font-weight:600;
     letter-spacing:.18em; text-transform:uppercase; margin-left:8px; vertical-align:middle;}
-  .tabs{display:flex; gap:6px; flex:0 0 auto;}
+  .tabs{display:flex; gap:6px; flex:0 0 auto; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
   .tab{background:transparent; border:1px solid var(--line); color:var(--muted);
     padding:8px 16px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.04em; cursor:pointer;
-    white-space:nowrap;}
+    white-space:nowrap; min-height:36px; display:flex; align-items:center;}
   .tab.active{color:#0a0a0a; background:var(--accent); border-color:var(--accent);}
   main{flex:1; padding:16px; padding-bottom:40px; max-width:720px; margin:0 auto; width:100%;}
   .hidden{display:none !important;}
@@ -48,7 +48,10 @@
     header{padding:12px 14px;}
     header h1{font-size:18px;}
     header h1 span{display:none;}
-    .tab{padding:7px 12px; font-size:11px;}
+    .tab{padding:6px 11px; font-size:10.5px; min-height:32px;}
+  }
+  @media (max-width:360px){
+    .tab{padding:6px 9px; font-size:10px;}
   }
 
   /* ---- Editor ---- */
@@ -59,10 +62,11 @@
   .btn.primary{background:var(--accent); border-color:var(--accent); color:#0a0a0a;}
   .btn.good{background:var(--text); border-color:var(--text); color:#0a0a0a;}
   .btn.ghost{background:transparent;}
-  .btn.small{padding:6px 12px; font-size:11px; border-radius:999px;}
+  .btn.small{padding:8px 14px; font-size:11px; border-radius:999px; min-height:34px;}
   .btn.danger{color:var(--danger); border-color:#4a3a34;}
   .btn.icon-btn{width:26px; height:26px; padding:0; display:flex; align-items:center; justify-content:center;
-    font-size:13px; line-height:1;}
+    font-size:13px; line-height:1; position:relative;}
+  .btn.icon-btn::after{content:''; position:absolute; inset:-7px;}
 
   .workout-name{width:100%; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
     color:var(--text); border-bottom:1px dashed var(--line); padding:8px 2px; margin-bottom:16px;}
@@ -77,22 +81,33 @@
     padding:8px 4px; border-radius:10px; text-align:center; font-size:16px;}
 
   .drag-handle{cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;
-    color:var(--muted); font-size:20px; padding:10px 8px; flex:0 0 auto; line-height:1;}
+    color:var(--muted); font-size:20px; padding:10px 8px; flex:0 0 auto; line-height:1; position:relative;}
+  .drag-handle::after{content:''; position:absolute; inset:-6px;}
   .drag-handle:active{cursor:grabbing;}
   .step-handle{cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;
     color:var(--muted); font-size:16px; text-align:center; line-height:1; padding:12px 0;
-    align-self:stretch; display:flex; align-items:center; justify-content:center;}
+    align-self:stretch; display:flex; align-items:center; justify-content:center; position:relative;}
+  .step-handle::after{content:''; position:absolute; inset:-3px -8px;}
   .step-handle:active{cursor:grabbing;}
   .dragging{opacity:.45; box-shadow:0 6px 18px rgba(0,0,0,.4);}
 
-  .step-row{display:grid; grid-template-columns:26px 1fr 46px 58px 58px 26px; gap:5px; align-items:center; margin-bottom:8px;}
+  .step-row{display:grid; grid-template-columns:26px minmax(0,1fr) 46px 58px 58px 26px; gap:5px; align-items:center; margin-bottom:8px;}
   .step-row input[type="text"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
-    padding:8px 6px; border-radius:8px; width:100%;}
+    padding:8px 6px; border-radius:8px; width:100%; min-width:0;}
   .step-row input[type="number"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
-    padding:8px 2px; border-radius:8px; width:100%; text-align:center;}
-  .step-row .lbl{font-size:10px; color:var(--muted); text-align:center; margin-bottom:2px; display:block;
-    white-space:nowrap; letter-spacing:0;}
-  .col-head{display:grid; grid-template-columns:26px 1fr 46px 58px 58px 26px; gap:5px; margin-bottom:2px;}
+    padding:8px 2px; border-radius:8px; width:100%; text-align:center; min-width:0;}
+  .lbl{font-size:9px; color:var(--muted); text-align:center; margin-bottom:2px; display:block;
+    white-space:nowrap; letter-spacing:0; overflow:hidden;}
+  .col-head{display:grid; grid-template-columns:26px minmax(0,1fr) 46px 58px 58px 26px; gap:5px; margin-bottom:2px;}
+
+  @media (max-width:400px){
+    main{padding:12px;}
+    .block{padding:12px;}
+    .step-row, .col-head{grid-template-columns:20px minmax(0,1fr) 36px 44px 44px 20px; gap:4px;}
+    .step-row input[type="number"]{padding:8px 1px;}
+    .step-row .btn.icon-btn{width:20px; height:20px; font-size:11px;}
+    .lbl{font-size:8px;}
+  }
 
   .block-footer{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
   .block-time{font-size:12px; color:var(--muted);}
@@ -119,6 +134,7 @@
   .class-card-date{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
   .class-card-name{font-family:var(--serif); font-size:17px; margin:2px 0;}
   .class-card-meta{font-size:12px; color:var(--muted);}
+  .class-card-desc{font-size:13px; color:var(--text); margin-top:6px; max-width:420px; line-height:1.4;}
   .class-card-actions{display:flex; gap:6px; flex-wrap:wrap;}
 
   .total-bar{position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
@@ -201,6 +217,16 @@
         </div>
       </div>
 
+      <div class="meta-field" style="margin-bottom:16px;">
+        <label for="classDescription">Description <span style="text-transform:none; letter-spacing:0;">(shows up when browsing My Classes)</span></label>
+        <input type="text" id="classDescription" placeholder="e.g. Glutes, hamstrings, and back — standing/mat only, no bands" onchange="setMeta('description', this.value)">
+      </div>
+
+      <div class="meta-field" style="margin-bottom:16px;">
+        <label for="classMessage">Message / inspo</label>
+        <textarea id="classMessage" class="import-box" placeholder="Icebreaker, theme, motivational message for this class..." oninput="setMeta('message', this.value)"></textarea>
+      </div>
+
       <div class="target-row">
         <label for="targetMinutes">Target length</label>
         <input class="rounds-input" id="targetMinutes" type="number" min="1" value="45" onchange="setTargetMinutes(this.value)">
@@ -215,16 +241,7 @@
       <div class="toolbar">
         <button class="btn primary" onclick="addBlock()">+ Add Block</button>
         <button class="btn" onclick="loadSample()">Load Sample Class</button>
-        <button class="btn ghost" onclick="toggleImportExport()">Import / Export</button>
         <button class="btn danger ghost" onclick="clearAll()">Clear All</button>
-      </div>
-
-      <div id="importExportWrap" class="hidden" style="margin-bottom:16px;">
-        <textarea id="importBox" class="import-box" placeholder="Paste workout JSON here to import..."></textarea>
-        <div class="toolbar" style="margin-top:8px;">
-          <button class="btn good" onclick="doImport()">Import</button>
-          <button class="btn" onclick="doExport()">Export current to box</button>
-        </div>
       </div>
 
       <div id="blocksWrap"></div>
@@ -363,6 +380,8 @@ function ensureIds(w){
   if(w.date == null) w.date = new Date().toISOString().slice(0,10);
   if(w.muscleGroup == null) w.muscleGroup = '';
   if(w.instructor == null) w.instructor = 'Sydney';
+  if(w.description == null) w.description = '';
+  if(w.message == null) w.message = '';
   if(w.id === undefined) w.id = null;
   return w;
 }
@@ -399,6 +418,10 @@ function renderEditor(){
   if(document.activeElement !== mgInput) mgInput.value = workout.muscleGroup || '';
   const instrInput = document.getElementById('classInstructor');
   if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
+  const descInput = document.getElementById('classDescription');
+  if(document.activeElement !== descInput) descInput.value = workout.description || '';
+  const msgInput = document.getElementById('classMessage');
+  if(document.activeElement !== msgInput) msgInput.value = workout.message || '';
   const targetInput = document.getElementById('targetMinutes');
   if(document.activeElement !== targetInput) targetInput.value = workout.targetMinutes || 45;
 
@@ -540,24 +563,6 @@ function clearAll(){
   workout = newWorkout();
   save(); renderEditor();
 }
-function toggleImportExport(){
-  document.getElementById('importExportWrap').classList.toggle('hidden');
-}
-function doExport(){
-  document.getElementById('importBox').value = JSON.stringify(workout, null, 2);
-}
-function doImport(){
-  try{
-    const parsed = JSON.parse(document.getElementById('importBox').value);
-    if(!parsed.blocks) throw new Error('missing blocks');
-    workout = ensureIds(parsed);
-    save(); renderEditor();
-    alert('Imported!');
-  }catch(e){
-    alert('Could not parse that JSON. Check formatting and try again.');
-  }
-}
-
 function blockDuration(block){
   const per = block.steps.reduce((sum, s) => sum + ((s.work||0) + (s.rest||0)) * (s.sets||1), 0);
   return per * (block.rounds||1);
@@ -657,6 +662,7 @@ function renderLibrary(){
         <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
         <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
         <div class="class-card-meta">${escapeAttr(cls.muscleGroup || '—')} · ${escapeAttr(cls.instructor || '—')}</div>
+        ${cls.description ? `<div class="class-card-desc">${escapeAttr(cls.description)}</div>` : ''}
       </div>
       <div class="class-card-actions">
         <button class="btn small" onclick="loadClass('${cls.id}')">Load</button>
