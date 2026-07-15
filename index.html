@@ -44,6 +44,14 @@
   main{flex:1; padding:16px; padding-bottom:40px; max-width:720px; margin:0 auto; width:100%;}
   .hidden{display:none !important;}
 
+  .whoami-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px;
+    border-bottom:1px solid var(--line); max-width:720px; margin:0 auto; width:100%; box-sizing:border-box;}
+  .whoami-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; flex:0 0 auto;}
+  .whoami-bar input{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:7px 12px; border-radius:999px; font-size:16px; min-width:180px; flex:0 1 220px;}
+  .whoami-hint{font-size:11px; color:var(--muted); flex:1 1 200px;}
+  @media (max-width:480px){ .whoami-hint{display:none;} }
+
   @media (max-width:400px){
     header{padding:12px 14px;}
     header h1{font-size:18px;}
@@ -115,6 +123,16 @@
   .import-box{width:100%; min-height:120px; background:var(--panel2); border:1px solid var(--line);
     color:var(--text); border-radius:10px; padding:10px; font-family:monospace; font-size:16px; margin-top:8px;}
 
+  .rte-toolbar{display:flex; gap:6px; margin-top:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .rte-editor{width:100%; min-height:120px; background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); border-radius:10px; padding:10px 12px; font-size:16px; line-height:1.5;
+    font-family:var(--sans); overflow-wrap:break-word;}
+  .rte-editor:focus{outline:none; border-color:var(--accent);}
+  .rte-editor:empty::before{content:attr(data-placeholder); color:var(--muted);}
+  .rte-editor ul{margin:4px 0; padding-left:22px;}
+  .rte-editor ul ul{margin:2px 0;}
+  .rte-editor li{margin:2px 0;}
+
   .target-row{display:flex; align-items:center; gap:8px; margin-bottom:16px;}
   .target-row label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
   .target-row span.unit{font-size:12px; color:var(--muted);}
@@ -122,8 +140,14 @@
   .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
   .meta-field{flex:1; min-width:130px;}
   .meta-field label{display:block; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;}
-  .meta-field input{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+  .meta-field input, .meta-field select{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
     padding:9px 10px; border-radius:10px; font-size:16px;}
+  .field-hint{display:block; font-size:11px; color:var(--danger); margin-top:4px; min-height:14px;}
+
+  .lib-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .lib-filters select, .lib-filters input[type="text"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 12px; border-radius:10px; font-size:16px; flex:1; min-width:140px;}
+  .lib-filters .btn{flex:0 0 auto;}
 
   .save-status{font-size:12px; color:var(--muted); align-self:center;}
   .lib-status{font-size:12px; color:var(--muted); margin-bottom:10px;}
@@ -135,7 +159,15 @@
   .class-card-name{font-family:var(--serif); font-size:17px; margin:2px 0;}
   .class-card-meta{font-size:12px; color:var(--muted);}
   .class-card-desc{font-size:13px; color:var(--text); margin-top:6px; max-width:420px; line-height:1.4;}
-  .class-card-actions{display:flex; gap:6px; flex-wrap:wrap;}
+  .class-card-actions{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .owner-note{font-size:11px; color:var(--muted); font-style:italic;}
+
+  .log-panel-title{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;}
+  .log-row{border-bottom:1px solid var(--line); padding:8px 0;}
+  .log-row:last-child{border-bottom:none;}
+  .log-row-main{display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;}
+  .log-row-meta{font-size:12px; color:var(--muted); margin-top:2px;}
+  #deletionLogPanel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:14px;}
 
   .total-bar{position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
     padding:10px 16px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted);}
@@ -159,9 +191,26 @@
   .timer.rest{color:var(--rest);}
   .timer.warn{color:var(--danger); }
 
-  .next-up{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px 18px;
-    font-size:13px; color:var(--muted); margin-top:8px; min-width:260px; letter-spacing:.01em;}
-  .next-up b{color:var(--text); font-family:var(--serif); font-weight:400;}
+  .message-drawer{width:100%; max-width:420px; margin:0 auto 14px;}
+  .message-drawer-toggle{width:100%; display:flex; justify-content:space-between; align-items:center;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); padding:12px 16px;
+    border-radius:14px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans);}
+  .message-drawer-content{background:var(--panel); border:1px solid var(--line); border-top:none;
+    border-radius:0 0 14px 14px; margin-top:-1px; padding:14px 16px; text-align:left; font-size:14px;
+    line-height:1.5; max-height:240px; overflow-y:auto;}
+  .message-drawer-content ul{margin:4px 0; padding-left:22px;}
+
+  .playlist-wrap{width:100%; max-width:420px; margin:14px auto 0; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px; padding:6px; text-align:left;}
+  .playlist-scroll{max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .playlist-row{display:flex; flex-direction:column; gap:1px; padding:10px 12px; border-radius:10px; cursor:pointer;}
+  .playlist-row:active{background:var(--panel2);}
+  .playlist-row-label{font-family:var(--serif); font-size:15px;}
+  .playlist-row-meta{font-size:11px; color:var(--muted); letter-spacing:.02em;}
+  .playlist-row.active{background:var(--panel2); border:1px solid var(--line);}
+  .playlist-row.active .playlist-row-label{color:var(--text); font-weight:600;}
+  .playlist-row.upcoming{opacity:.55;}
+  .playlist-row.past{opacity:.3;}
 
   .jump-select{margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--muted);
     padding:10px 16px; border-radius:999px; font-family:var(--sans); text-align:center;
@@ -193,9 +242,15 @@
     <div class="tabs">
       <div class="tab active" id="tabEditor" onclick="showScreen('editor')">Build</div>
       <div class="tab" id="tabRun" onclick="showScreen('run')">Run Class</div>
-      <div class="tab" id="tabLibrary" onclick="showScreen('library')">My Classes</div>
+      <div class="tab" id="tabLibrary" onclick="showScreen('library')">Classes</div>
     </div>
   </header>
+
+  <div class="whoami-bar">
+    <span class="whoami-label">You are:</span>
+    <input type="text" id="whoamiInput" list="instructorList" placeholder="Select or type your name" onchange="setCurrentUser(this.value)">
+    <span class="whoami-hint">Used to track who created each class and to enable deleting your own.</span>
+  </div>
 
   <main>
     <!-- EDITOR -->
@@ -204,27 +259,43 @@
 
       <div class="meta-row">
         <div class="meta-field">
-          <label for="classDate">Date</label>
-          <input type="date" id="classDate" onchange="setMeta('date', this.value)">
+          <label for="classDate">Date <span style="text-transform:none; letter-spacing:0;">(MM/DD/YYYY)</span></label>
+          <input type="text" id="classDate" placeholder="MM/DD/YYYY" inputmode="numeric" onchange="setDateField(this.value)">
+          <span class="field-hint" id="dateHint"></span>
         </div>
         <div class="meta-field">
-          <label for="classMuscleGroup">Muscle group</label>
-          <input type="text" id="classMuscleGroup" placeholder="e.g. Posterior Chain" onchange="setMeta('muscleGroup', this.value)">
+          <label for="classType">Class type</label>
+          <select id="classType" onchange="setMeta('classType', this.value)">
+            <option value="">Select class type…</option>
+            <!-- CLASS_TYPE_OPTIONS -->
+          </select>
         </div>
         <div class="meta-field">
           <label for="classInstructor">Instructor</label>
-          <input type="text" id="classInstructor" placeholder="e.g. Sydney" onchange="setMeta('instructor', this.value)">
+          <input type="text" id="classInstructor" list="instructorList" placeholder="Type or select a name" onchange="setMeta('instructor', this.value)">
+          <datalist id="instructorList">
+            <!-- INSTRUCTOR_OPTIONS -->
+          </datalist>
         </div>
       </div>
 
       <div class="meta-field" style="margin-bottom:16px;">
-        <label for="classDescription">Description <span style="text-transform:none; letter-spacing:0;">(shows up when browsing My Classes)</span></label>
+        <label for="classDescription">Description <span style="text-transform:none; letter-spacing:0;">(shows up when browsing Classes)</span></label>
         <input type="text" id="classDescription" placeholder="e.g. Glutes, hamstrings, and back — standing/mat only, no bands" onchange="setMeta('description', this.value)">
       </div>
 
       <div class="meta-field" style="margin-bottom:16px;">
         <label for="classMessage">Message / inspo</label>
-        <textarea id="classMessage" class="import-box" placeholder="Icebreaker, theme, motivational message for this class..." oninput="setMeta('message', this.value)"></textarea>
+        <div class="rte-toolbar">
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('bold')"><b>B</b></button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('italic')"><i>I</i></button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('insertUnorderedList')">• List</button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(1)">Indent →</button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(-1)">← Outdent</button>
+        </div>
+        <div id="classMessage" class="rte-editor" contenteditable="true"
+          data-placeholder="Icebreaker, theme, motivational message for this class... Use • List, then Tab on a bullet for a sub-bullet."
+          oninput="onMessageInput()" onkeydown="onMessageKeydown(event)"></div>
       </div>
 
       <div class="target-row">
@@ -234,7 +305,7 @@
       </div>
 
       <div class="toolbar">
-        <button class="btn good" onclick="saveClass()">💾 Save Class</button>
+        <button class="btn good" onclick="saveClass()">Save Class</button>
         <span class="save-status" id="saveStatus"></span>
       </div>
 
@@ -253,6 +324,14 @@
 
     <!-- RUNNER -->
     <div id="screenRun" class="hidden">
+      <div class="message-drawer">
+        <button type="button" class="message-drawer-toggle" onclick="toggleMessageDrawer()">
+          <span>Message / Inspo</span>
+          <span id="messageDrawerChevron">▾</span>
+        </button>
+        <div id="messageDrawerContent" class="message-drawer-content hidden"></div>
+      </div>
+
       <div id="runSetup" class="setup-screen">
         <h2>Ready to run</h2>
         <p class="tagline">Come as you are, we will meet you there.</p>
@@ -265,7 +344,10 @@
         <div class="type-pill work" id="typePill">WORK</div>
         <div class="movement-name" id="movementName">—</div>
         <div class="timer work" id="timerDisplay">0:00</div>
-        <div class="next-up" id="nextUp">Next: —</div>
+
+        <div class="playlist-wrap">
+          <div class="playlist-scroll" id="playlistScroll"></div>
+        </div>
 
         <select class="jump-select" id="jumpSelect" onchange="onJumpSelect(this.value)">
           <option value="">Jump to block…</option>
@@ -287,10 +369,22 @@
 
     <!-- LIBRARY -->
     <div id="screenLibrary" class="hidden">
-      <div class="toolbar">
-        <button class="btn" onclick="refreshLibrary()">↻ Refresh</button>
+      <div class="lib-filters">
+        <select id="filterClassType" onchange="setLibraryFilter('classType', this.value)">
+          <option value="">All class types</option>
+          <!-- CLASS_TYPE_OPTIONS -->
+        </select>
+        <select id="filterInstructor" onchange="setLibraryFilter('instructor', this.value)">
+          <option value="">All instructors</option>
+          <!-- INSTRUCTOR_OPTIONS -->
+        </select>
+        <input type="text" id="filterKeyword" placeholder="Search keywords…" oninput="setLibraryFilter('keyword', this.value)">
+        <button class="btn small" id="sortDirBtn" onclick="toggleSortDir()">Date ↓ Newest</button>
+        <button class="btn small ghost" onclick="refreshLibrary()">↻ Refresh</button>
+        <button class="btn small ghost" onclick="toggleDeletionLog()">Deletion history</button>
       </div>
       <div class="lib-status" id="libraryStatus"></div>
+      <div id="deletionLogPanel" class="hidden"></div>
       <div id="libraryList"></div>
     </div>
   </main>
@@ -315,6 +409,23 @@
 let workout = null;
 let library = [];
 const STORAGE_KEY = 'altarClassTimerWorkout_v1';
+const CURRENT_USER_KEY = 'altarCurrentUser';
+
+/* ---------------------------------------------------------
+   CURRENT USER — a lightweight, no-login stand-in for "who's
+   using this app right now" on this device. Not real auth:
+   it's a name someone picks, stored on this device only. It's
+   used to (a) prefill Instructor on new classes, (b) record who
+   created a class, and (c) gate the Delete button so only the
+   creator sees it for their own classes.
+--------------------------------------------------------- */
+function getCurrentUser(){
+  try{ return localStorage.getItem(CURRENT_USER_KEY) || ''; }catch(e){ return ''; }
+}
+function setCurrentUser(name){
+  try{ localStorage.setItem(CURRENT_USER_KEY, name || ''); }catch(e){}
+  renderLibrary();
+}
 
 const SAMPLE = {
   name: "7.7.26 IRON 45 — Push Pull Carry",
@@ -368,6 +479,48 @@ const SAMPLE = {
 
 function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
+/* ---------------------------------------------------------
+   FIXED OPTION LISTS
+--------------------------------------------------------- */
+const CLASS_TYPES = [
+  "ECHO- Dance Cardio",
+  "GROUNDWRK - Mat Pilates",
+  "IGNITE 45- HIIT Strength Training",
+  "IRON 45 - Heavy Weight Lifting",
+  "MATS x MARGS x MUSIC",
+  "SYNC 30 x IRON 30",
+  "SYNC 45- Cycle",
+  "SYNC 60- Cycle",
+];
+const INSTRUCTORS = [
+  "Ally White", "April Alford", "Audri Saylors", "Chloe Riddle", "Courtland Olson",
+  "Kaleigh Molgaard", "Kenna Lightle", "Krysta Winkelmann", "Madison Combs",
+  "Sydney Wilhelms", "Vern Davis",
+].sort((a, b) => a.localeCompare(b));
+
+/* ---------------------------------------------------------
+   DATE HELPERS — dates are stored/entered as MM/DD/YYYY
+--------------------------------------------------------- */
+function isValidMDY(str){
+  if(!str) return false;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(str).trim());
+  if(!m) return false;
+  const month = parseInt(m[1], 10), day = parseInt(m[2], 10), year = parseInt(m[3], 10);
+  if(month < 1 || month > 12) return false;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if(day < 1 || day > daysInMonth) return false;
+  return true;
+}
+function parseMDY(str){
+  if(!isValidMDY(str)) return null;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(str).trim());
+  return new Date(parseInt(m[3], 10), parseInt(m[1], 10) - 1, parseInt(m[2], 10));
+}
+function todayMDY(){
+  const d = new Date();
+  return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+
 function ensureIds(w){
   (w.blocks||[]).forEach(b => {
     if(!b._id) b._id = uid();
@@ -377,12 +530,18 @@ function ensureIds(w){
     });
   });
   if(w.targetMinutes == null) w.targetMinutes = 45;
-  if(w.date == null) w.date = new Date().toISOString().slice(0,10);
-  if(w.muscleGroup == null) w.muscleGroup = '';
-  if(w.instructor == null) w.instructor = 'Sydney';
+  // Migrate legacy ISO dates (YYYY-MM-DD, from the old native date picker) to MM/DD/YYYY.
+  if(w.date && /^\d{4}-\d{2}-\d{2}$/.test(w.date)){
+    const [y, mo, da] = w.date.split('-');
+    w.date = parseInt(mo, 10) + '/' + parseInt(da, 10) + '/' + y;
+  }
+  if(w.date == null || w.date === '' || !isValidMDY(w.date)) w.date = todayMDY();
+  if(w.classType == null) w.classType = w.muscleGroup || '';
+  if(w.instructor == null) w.instructor = 'Sydney Wilhelms';
   if(w.description == null) w.description = '';
   if(w.message == null) w.message = '';
   if(w.id === undefined) w.id = null;
+  if(w.createdBy == null) w.createdBy = '';
   return w;
 }
 
@@ -397,7 +556,10 @@ function newBlock(){
    PERSISTENCE
 --------------------------------------------------------- */
 function save(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(workout)); }catch(e){}
+  try{
+    workout.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workout));
+  }catch(e){}
 }
 function load(){
   try{
@@ -414,14 +576,14 @@ function renderEditor(){
   document.getElementById('workoutName').value = workout.name;
   const dateInput = document.getElementById('classDate');
   if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
-  const mgInput = document.getElementById('classMuscleGroup');
-  if(document.activeElement !== mgInput) mgInput.value = workout.muscleGroup || '';
+  const typeSelect = document.getElementById('classType');
+  if(typeSelect && document.activeElement !== typeSelect) typeSelect.value = workout.classType || '';
   const instrInput = document.getElementById('classInstructor');
   if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
   const descInput = document.getElementById('classDescription');
   if(document.activeElement !== descInput) descInput.value = workout.description || '';
   const msgInput = document.getElementById('classMessage');
-  if(document.activeElement !== msgInput) msgInput.value = workout.message || '';
+  if(msgInput && document.activeElement !== msgInput) msgInput.innerHTML = workout.message || '';
   const targetInput = document.getElementById('targetMinutes');
   if(document.activeElement !== targetInput) targetInput.value = workout.targetMinutes || 45;
 
@@ -553,6 +715,98 @@ function removeStep(bi, si){
 }
 function onNameChange(){ workout.name = document.getElementById('workoutName').value; save(); }
 function setMeta(field, val){ workout[field] = val; save(); }
+
+function setDateField(val){
+  const hintEl = document.getElementById('dateHint');
+  if(!isValidMDY(val)){
+    if(hintEl) hintEl.textContent = 'Enter date as MM/DD/YYYY';
+    return;
+  }
+  if(hintEl) hintEl.textContent = '';
+  workout.date = val;
+  save();
+}
+
+/* ---------------------------------------------------------
+   RICH TEXT EDITOR — Message / inspo. Plain contenteditable +
+   execCommand, no external library. Tab/Shift+Tab on a bullet
+   indent/outdent it into a sub-bullet (nested <ul>).
+--------------------------------------------------------- */
+function rteCmd(command, value){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  editor.focus();
+  try{ document.execCommand(command, false, value || null); }catch(e){}
+  onMessageInput();
+}
+
+function rteIndent(dir){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  editor.focus();
+  try{ document.execCommand(dir > 0 ? 'indent' : 'outdent', false, null); }catch(e){}
+  onMessageInput();
+}
+
+function inListItem(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0) return false;
+  let node = sel.getRangeAt(0).startContainer;
+  while(node){
+    if(node.nodeType === 1 && node.tagName === 'LI') return true;
+    node = node.parentNode;
+  }
+  return false;
+}
+
+function onMessageKeydown(event){
+  if(event.key === 'Tab' && inListItem()){
+    event.preventDefault();
+    rteIndent(event.shiftKey ? -1 : 1);
+  }
+}
+
+function onMessageInput(){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  workout.message = editor.innerHTML;
+  save();
+}
+
+function populateStaticOptions(){
+  const typeSelect = document.getElementById('classType');
+  if(typeSelect && typeSelect.options.length <= 1){
+    CLASS_TYPES.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t; opt.textContent = t;
+      typeSelect.appendChild(opt);
+    });
+  }
+  const instrList = document.getElementById('instructorList');
+  if(instrList && instrList.options.length === 0){
+    INSTRUCTORS.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      instrList.appendChild(opt);
+    });
+  }
+  const filterType = document.getElementById('filterClassType');
+  if(filterType && filterType.options.length <= 1){
+    CLASS_TYPES.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t; opt.textContent = t;
+      filterType.appendChild(opt);
+    });
+  }
+  const filterInstr = document.getElementById('filterInstructor');
+  if(filterInstr && filterInstr.options.length <= 1){
+    INSTRUCTORS.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      filterInstr.appendChild(opt);
+    });
+  }
+}
 function loadSample(){
   if(workout.blocks.length && !confirm('Replace current workout with the sample class?')) return;
   workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
@@ -600,7 +854,7 @@ function showScreen(which){
   document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
   document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
   document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
-  if(which==='run'){ prepareRunSummary(); }
+  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); }
   if(which==='library'){ refreshLibrary(); }
 }
 
@@ -609,10 +863,22 @@ function showScreen(which){
    device opening this same site sees the same saved classes)
 --------------------------------------------------------- */
 async function saveClass(){
+  const statusEl = document.getElementById('saveStatus');
+  if(!isValidMDY(workout.date)){
+    if(statusEl) statusEl.textContent = 'Fix the date (MM/DD/YYYY) before saving.';
+    const dateInput = document.getElementById('classDate');
+    if(dateInput) dateInput.focus();
+    return;
+  }
   if(!workout.id) workout.id = uid();
+  if(!workout.createdBy){
+    // createdBy is locked in the first time a class is saved — this is the
+    // accountability anchor for who's allowed to delete it later. Falls back to
+    // the Instructor field if nobody's set "You are" yet.
+    workout.createdBy = getCurrentUser() || workout.instructor || 'Unknown';
+  }
   workout.updatedAt = new Date().toISOString();
   save();
-  const statusEl = document.getElementById('saveStatus');
   if(statusEl) statusEl.textContent = 'Saving…';
   try{
     const res = await fetch('/api/classes', {
@@ -621,7 +887,7 @@ async function saveClass(){
       body: JSON.stringify(workout)
     });
     if(!res.ok) throw new Error('bad status');
-    if(statusEl) statusEl.textContent = 'Saved ✓ — visible on any device under My Classes';
+    if(statusEl) statusEl.textContent = 'Saved ✓ — visible on any device under Classes';
     const idx = library.findIndex(c => c.id === workout.id);
     const copy = JSON.parse(JSON.stringify(workout));
     if(idx >= 0) library[idx] = copy; else library.unshift(copy);
@@ -645,6 +911,20 @@ async function refreshLibrary(){
   renderLibrary();
 }
 
+let libraryFilters = { classType: '', instructor: '', keyword: '', sortDir: 'desc' };
+
+function setLibraryFilter(field, val){
+  libraryFilters[field] = val;
+  renderLibrary();
+}
+
+function toggleSortDir(){
+  libraryFilters.sortDir = libraryFilters.sortDir === 'desc' ? 'asc' : 'desc';
+  const btn = document.getElementById('sortDirBtn');
+  if(btn) btn.textContent = libraryFilters.sortDir === 'desc' ? 'Date ↓ Newest' : 'Date ↑ Oldest';
+  renderLibrary();
+}
+
 function renderLibrary(){
   const wrap = document.getElementById('libraryList');
   if(!wrap) return;
@@ -653,21 +933,51 @@ function renderLibrary(){
     wrap.innerHTML = '<p class="muted-note">No saved classes yet. Build one in the Build tab, then tap Save Class.</p>';
     return;
   }
-  const sorted = [...library].sort((a,b) => (b.date||'').localeCompare(a.date||''));
-  sorted.forEach(cls => {
+
+  let filtered = library.filter(cls => {
+    const type = cls.classType || cls.muscleGroup || '';
+    if(libraryFilters.classType && type !== libraryFilters.classType) return false;
+    if(libraryFilters.instructor && (cls.instructor || '') !== libraryFilters.instructor) return false;
+    if(libraryFilters.keyword){
+      const kw = libraryFilters.keyword.toLowerCase();
+      const haystack = [cls.name, cls.description, cls.message, type, cls.instructor].filter(Boolean).join(' ').toLowerCase();
+      if(!haystack.includes(kw)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const da = parseMDY(a.date); const db = parseMDY(b.date);
+    const ta = da ? da.getTime() : 0;
+    const tb = db ? db.getTime() : 0;
+    return libraryFilters.sortDir === 'asc' ? ta - tb : tb - ta;
+  });
+
+  if(!filtered.length){
+    wrap.innerHTML = '<p class="muted-note">No classes match those filters.</p>';
+    return;
+  }
+
+  const me = getCurrentUser();
+  filtered.forEach(cls => {
+    const type = cls.classType || cls.muscleGroup || '—';
+    const isOwner = me && norm(cls.createdBy) === norm(me);
+    const deleteControl = isOwner
+      ? `<button class="btn small danger" onclick="deleteClass('${cls.id}')">Delete</button>`
+      : `<span class="owner-note">Only ${escapeAttr(cls.createdBy || 'the creator')} can delete</span>`;
     const card = document.createElement('div');
     card.className = 'class-card';
     card.innerHTML = `
       <div class="class-card-main">
         <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
         <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
-        <div class="class-card-meta">${escapeAttr(cls.muscleGroup || '—')} · ${escapeAttr(cls.instructor || '—')}</div>
+        <div class="class-card-meta">${escapeAttr(type)} · ${escapeAttr(cls.instructor || '—')} · created by ${escapeAttr(cls.createdBy || 'Unknown')}</div>
         ${cls.description ? `<div class="class-card-desc">${escapeAttr(cls.description)}</div>` : ''}
       </div>
       <div class="class-card-actions">
         <button class="btn small" onclick="loadClass('${cls.id}')">Load</button>
         <button class="btn small ghost" onclick="duplicateClass('${cls.id}')">Duplicate</button>
-        <button class="btn small danger" onclick="deleteClass('${cls.id}')">Delete</button>
+        ${deleteControl}
       </div>
     `;
     wrap.appendChild(card);
@@ -690,6 +1000,7 @@ function duplicateClass(id){
   const copy = JSON.parse(JSON.stringify(cls));
   copy.id = uid();
   copy.name = (copy.name || 'Untitled class') + ' (copy)';
+  copy.createdBy = ''; // a duplicate becomes a new class, owned by whoever saves it next
   workout = ensureIds(copy);
   save();
   renderEditor();
@@ -699,12 +1010,77 @@ function duplicateClass(id){
 async function deleteClass(id){
   const cls = library.find(c => c.id === id);
   if(!cls) return;
-  if(!confirm('Delete "' + cls.name + '"? This cannot be undone.')) return;
+  const me = getCurrentUser();
+  if(!me){
+    alert('Select "You are" at the top of the app before deleting a class.');
+    return;
+  }
+  if(norm(cls.createdBy) !== norm(me)){
+    alert('Only ' + (cls.createdBy || 'the creator') + ' can delete this class.');
+    return;
+  }
+  if(!confirm('Delete "' + cls.name + '"? This cannot be undone, and will be logged.')) return;
   try{
-    await fetch('/api/classes?id=' + encodeURIComponent(id), { method: 'DELETE' });
-  }catch(e){}
+    const res = await fetch('/api/classes?id=' + encodeURIComponent(id) + '&deletedBy=' + encodeURIComponent(me), { method: 'DELETE' });
+    if(!res.ok){
+      const data = await res.json().catch(() => ({}));
+      if(res.status === 403){
+        alert('Only ' + (data.createdBy || 'the creator') + ' can delete this class.');
+      } else {
+        alert('Could not delete — check your connection and try again.');
+      }
+      return;
+    }
+  }catch(e){
+    alert('Could not delete — check your connection and try again.');
+    return;
+  }
   library = library.filter(c => c.id !== id);
   renderLibrary();
+}
+
+function norm(s){ return String(s || '').trim().toLowerCase(); }
+
+let deletionLogOpen = false;
+async function toggleDeletionLog(){
+  deletionLogOpen = !deletionLogOpen;
+  const panel = document.getElementById('deletionLogPanel');
+  if(!panel) return;
+  if(!deletionLogOpen){
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+  panel.innerHTML = '<p class="muted-note">Loading…</p>';
+  try{
+    const res = await fetch('/api/classes?log=1');
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    renderDeletionLog(data.log || []);
+  }catch(e){
+    panel.innerHTML = '<p class="muted-note">Could not load deletion history.</p>';
+  }
+}
+
+function renderDeletionLog(log){
+  const panel = document.getElementById('deletionLogPanel');
+  if(!panel) return;
+  if(!log.length){
+    panel.innerHTML = '<p class="muted-note">No classes have been deleted yet.</p>';
+    return;
+  }
+  const rows = log.map(entry => `
+    <div class="log-row">
+      <div class="log-row-main">
+        <b>${escapeAttr(entry.name || 'Untitled class')}</b>
+        <span class="muted-note">${escapeAttr(entry.classType || '')}</span>
+      </div>
+      <div class="log-row-meta">
+        Created by ${escapeAttr(entry.createdBy || 'Unknown')} · deleted by ${escapeAttr(entry.deletedBy || 'Unknown')} on ${escapeAttr(new Date(entry.deletedAt).toLocaleString())}
+      </div>
+    </div>
+  `).join('');
+  panel.innerHTML = '<div class="log-panel-title">Deletion history</div>' + rows;
 }
 
 /* ---------------------------------------------------------
@@ -858,10 +1234,64 @@ function renderRunFrame(){
   timerEl.className = 'timer ' + step.type + (remaining<=3 ? ' warn' : '');
   timerEl.textContent = fmtTime(remaining);
 
-  const next = sequence[seqIndex+1];
-  document.getElementById('nextUp').innerHTML = next
-    ? `Next: <b>${next.type==='rest' ? 'Rest' : next.label}</b> (${fmtTime(next.seconds)})`
-    : `Next: <b>Class complete 🎉</b>`;
+  renderPlaylist();
+}
+
+/* ---------------------------------------------------------
+   MESSAGE / INSPO DRAWER (Run Class page)
+--------------------------------------------------------- */
+let messageDrawerOpen = false;
+function toggleMessageDrawer(){
+  messageDrawerOpen = !messageDrawerOpen;
+  renderMessageDrawer();
+}
+function renderMessageDrawer(){
+  const content = document.getElementById('messageDrawerContent');
+  const chevron = document.getElementById('messageDrawerChevron');
+  if(!content) return;
+  content.classList.toggle('hidden', !messageDrawerOpen);
+  if(chevron) chevron.textContent = messageDrawerOpen ? '▴' : '▾';
+  if(messageDrawerOpen){
+    content.innerHTML = (workout.message && workout.message.trim())
+      ? workout.message
+      : '<p class="muted-note">No message added for this class.</p>';
+  }
+}
+
+/* ---------------------------------------------------------
+   PLAYLIST — active movement + scrolling upcoming queue.
+   Tap any row to jump straight to that movement.
+--------------------------------------------------------- */
+function renderPlaylist(){
+  const wrap = document.getElementById('playlistScroll');
+  if(!wrap) return;
+
+  // "Active" is the most recent work entry at-or-before the current position —
+  // during a rest, the movement you're resting from stays highlighted until the
+  // next movement's work segment actually starts.
+  let activeSeqIdx = -1;
+  for(let i = 0; i <= seqIndex && i < sequence.length; i++){
+    if(sequence[i].type === 'work') activeSeqIdx = i;
+  }
+
+  wrap.innerHTML = '';
+  sequence.forEach((step, i) => {
+    if(step.type !== 'work') return;
+    const row = document.createElement('div');
+    row.className = 'playlist-row ' + (i === activeSeqIdx ? 'active' : i < activeSeqIdx ? 'past' : 'upcoming');
+    let meta = step.blockName || '';
+    if(step.roundsTotal > 1) meta += ' · Round ' + step.roundIndex + '/' + step.roundsTotal;
+    if(step.setsTotal > 1) meta += ' · Set ' + step.setIndex + '/' + step.setsTotal;
+    row.innerHTML = `
+      <span class="playlist-row-label">${escapeAttr(step.label)}</span>
+      <span class="playlist-row-meta">${escapeAttr(meta)}</span>
+    `;
+    row.onclick = () => jumpToIndex(i);
+    wrap.appendChild(row);
+  });
+
+  const activeEl = wrap.querySelector('.playlist-row.active');
+  if(activeEl) activeEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
 function tick(){
@@ -891,7 +1321,7 @@ function finishRun(){
   clearInterval(tickHandle);
   running = false;
   buzzEnd();
-  document.getElementById('movementName').textContent = 'Class complete 🎉';
+  document.getElementById('movementName').textContent = 'Class complete';
   document.getElementById('progressLine').textContent = 'Nice work.';
   document.getElementById('timerDisplay').textContent = '0:00';
   document.getElementById('nextUp').textContent = '';
@@ -934,10 +1364,35 @@ function endRun(){
 /* ---------------------------------------------------------
    INIT
 --------------------------------------------------------- */
-(function init(){
-  workout = ensureIds(load() || JSON.parse(JSON.stringify(SAMPLE)));
+(async function init(){
+  populateStaticOptions();
+  const whoamiInput = document.getElementById('whoamiInput');
+  if(whoamiInput) whoamiInput.value = getCurrentUser();
+  const localDraft = load();
+  await refreshLibrary(); // populates `library` from the cloud before deciding what to show
+
+  let mostRecentCloud = null;
+  if(library.length){
+    const sortKey = (c) => c.updatedAt || (parseMDY(c.date) ? parseMDY(c.date).toISOString() : '');
+    mostRecentCloud = [...library].sort((a,b) => sortKey(b).localeCompare(sortKey(a)))[0];
+  }
+
+  if(localDraft && mostRecentCloud){
+    // Prefer whichever was actually edited more recently — this device's in-progress
+    // draft, or a class saved from a different device — so a phone that's never been
+    // used to build a class doesn't fall back to the old built-in sample.
+    const localTime = localDraft.updatedAt || '';
+    const cloudTime = mostRecentCloud.updatedAt || '';
+    workout = ensureIds(cloudTime > localTime ? JSON.parse(JSON.stringify(mostRecentCloud)) : localDraft);
+  } else if(mostRecentCloud){
+    workout = ensureIds(JSON.parse(JSON.stringify(mostRecentCloud)));
+  } else if(localDraft && localDraft.blocks && localDraft.blocks.length){
+    workout = ensureIds(localDraft);
+  } else {
+    workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
+  }
+  save();
   renderEditor();
-  refreshLibrary();
 })();
 </script>
 </body>
