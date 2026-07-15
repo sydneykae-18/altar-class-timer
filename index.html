@@ -76,9 +76,13 @@
     font-size:13px; line-height:1; position:relative;}
   .btn.icon-btn::after{content:''; position:absolute; inset:-7px;}
 
-  .workout-name{width:100%; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
-    color:var(--text); border-bottom:1px dashed var(--line); padding:8px 2px; margin-bottom:16px;}
+  .title-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:4px;}
+  .workout-name{flex:1 1 220px; min-width:0; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
+    color:var(--text); border-bottom:1px dashed var(--line); padding:8px 2px;}
   .workout-name:focus{outline:none; border-bottom-color:var(--accent);}
+  .workout-name::placeholder{font-size:15px; font-family:var(--sans); color:var(--muted);}
+  .title-row-actions{display:flex; gap:8px; flex:0 0 auto;}
+  .save-status-row{min-height:16px; margin-bottom:12px;}
 
   .block{background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; margin-bottom:14px; transition:box-shadow .15s;}
   .block-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
@@ -124,9 +128,9 @@
     color:var(--text); border-radius:10px; padding:10px; font-family:monospace; font-size:16px; margin-top:8px;}
 
   .rte-toolbar{display:flex; gap:6px; margin-top:8px; margin-bottom:6px; flex-wrap:wrap;}
-  .rte-editor{width:100%; min-height:120px; background:var(--panel2); border:1px solid var(--line);
+  .rte-editor{width:100%; height:160px; background:var(--panel2); border:1px solid var(--line);
     color:var(--text); border-radius:10px; padding:10px 12px; font-size:16px; line-height:1.5;
-    font-family:var(--sans); overflow-wrap:break-word;}
+    font-family:var(--sans); overflow-wrap:break-word; overflow-y:auto; -webkit-overflow-scrolling:touch;}
   .rte-editor:focus{outline:none; border-color:var(--accent);}
   .rte-editor:empty::before{content:attr(data-placeholder); color:var(--muted);}
   .rte-editor ul{margin:4px 0; padding-left:22px;}
@@ -184,12 +188,15 @@
   .type-pill.rest{background:transparent; color:var(--muted); border-color:var(--line);}
   .type-pill.done{background:var(--text); color:#0a0a0a; border-color:var(--text);}
 
-  .movement-name{font-size:30px; font-weight:400; font-family:var(--serif); margin:10px 0 0; line-height:1.2;}
-  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; margin:14px 0 4px; font-variant-numeric:tabular-nums;
+  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; margin:10px 0 4px; font-variant-numeric:tabular-nums;
     transition:color .2s;}
   .timer.work{color:var(--work);}
   .timer.rest{color:var(--rest);}
   .timer.warn{color:var(--danger); }
+
+  .now-playing{margin-top:8px; text-align:center;}
+  .now-playing-label{font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;}
+  .now-playing-title{font-size:24px; font-weight:400; font-family:var(--serif); line-height:1.25; margin-top:4px;}
 
   .message-drawer{width:100%; max-width:420px; margin:0 auto 14px;}
   .message-drawer-toggle{width:100%; display:flex; justify-content:space-between; align-items:center;
@@ -201,16 +208,14 @@
   .message-drawer-content ul{margin:4px 0; padding-left:22px;}
 
   .playlist-wrap{width:100%; max-width:420px; margin:14px auto 0; background:var(--panel);
-    border:1px solid var(--line); border-radius:16px; padding:6px; text-align:left;}
+    border:1px solid var(--line); border-radius:16px; padding:10px; text-align:left;}
+  .playlist-label{font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; padding:2px 6px 8px;}
   .playlist-scroll{max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
   .playlist-row{display:flex; flex-direction:column; gap:1px; padding:10px 12px; border-radius:10px; cursor:pointer;}
   .playlist-row:active{background:var(--panel2);}
   .playlist-row-label{font-family:var(--serif); font-size:15px;}
   .playlist-row-meta{font-size:11px; color:var(--muted); letter-spacing:.02em;}
-  .playlist-row.active{background:var(--panel2); border:1px solid var(--line);}
-  .playlist-row.active .playlist-row-label{color:var(--text); font-weight:600;}
-  .playlist-row.upcoming{opacity:.55;}
-  .playlist-row.past{opacity:.3;}
+  .playlist-row.upcoming{opacity:.65;}
 
   .jump-select{margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--muted);
     padding:10px 16px; border-radius:999px; font-family:var(--sans); text-align:center;
@@ -231,7 +236,7 @@
 
   @media (max-width:400px){
     .timer{font-size:88px;}
-    .movement-name{font-size:24px;}
+    .now-playing-title{font-size:20px;}
   }
 </style>
 </head>
@@ -255,7 +260,14 @@
   <main>
     <!-- EDITOR -->
     <div id="screenEditor">
-      <input class="workout-name" id="workoutName" value="7.7.26 IRON 45 — Push Pull Carry" oninput="onNameChange()">
+      <div class="title-row">
+        <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
+        <div class="title-row-actions">
+          <button class="btn good" onclick="saveClass()">Save Class</button>
+          <button class="btn danger ghost" onclick="clearAll()">Clear All</button>
+        </div>
+      </div>
+      <div class="save-status-row"><span class="save-status" id="saveStatus"></span></div>
 
       <div class="meta-row">
         <div class="meta-field">
@@ -305,14 +317,8 @@
       </div>
 
       <div class="toolbar">
-        <button class="btn good" onclick="saveClass()">Save Class</button>
-        <span class="save-status" id="saveStatus"></span>
-      </div>
-
-      <div class="toolbar">
         <button class="btn primary" onclick="addBlock()">+ Add Block</button>
         <button class="btn" onclick="loadSample()">Load Sample Class</button>
-        <button class="btn danger ghost" onclick="clearAll()">Clear All</button>
       </div>
 
       <div id="blocksWrap"></div>
@@ -342,10 +348,15 @@
       <div id="runActive" class="runner hidden">
         <div class="progress-line" id="progressLine">Block 1 of 1 · Round 1 of 1</div>
         <div class="type-pill work" id="typePill">WORK</div>
-        <div class="movement-name" id="movementName">—</div>
         <div class="timer work" id="timerDisplay">0:00</div>
 
+        <div class="now-playing">
+          <div class="now-playing-label">Now Playing</div>
+          <div class="now-playing-title" id="movementName">—</div>
+        </div>
+
         <div class="playlist-wrap">
+          <div class="playlist-label">Up Next</div>
           <div class="playlist-scroll" id="playlistScroll"></div>
         </div>
 
@@ -542,11 +553,59 @@ function ensureIds(w){
   if(w.message == null) w.message = '';
   if(w.id === undefined) w.id = null;
   if(w.createdBy == null) w.createdBy = '';
+  if(w.name == null) w.name = '';
+  // Baseline for the auto-title sync logic below — reflects what a fresh
+  // auto-generated title would look like for THIS workout's date/type, before
+  // it becomes the active `workout`.
+  lastTitlePrefix = autoTitlePrefix(w);
+  if(!w.name.trim()) w.name = lastTitlePrefix;
   return w;
 }
 
+/* ---------------------------------------------------------
+   AUTO-TITLE — the class title auto-fills from date + class
+   type (e.g. "7.14.26 IRON 45"), and the user can keep typing
+   to finish it (a theme, focus, etc.). If they later change the
+   date or class type, we update just that leading portion and
+   leave anything they've appended alone. If they've rewritten
+   the title into something that no longer matches the known
+   auto-prefix, we don't touch it — it's fully theirs at that point.
+--------------------------------------------------------- */
+let lastTitlePrefix = '';
+
+function classTypeShortLabel(type){
+  if(!type) return '';
+  const dashIdx = type.indexOf('-');
+  return (dashIdx > -1 ? type.slice(0, dashIdx) : type).trim();
+}
+function dateShortLabel(dateStr){
+  const d = parseMDY(dateStr);
+  if(!d) return '';
+  return (d.getMonth() + 1) + '.' + d.getDate() + '.' + String(d.getFullYear()).slice(-2);
+}
+function autoTitlePrefix(w){
+  w = w || workout;
+  if(!w) return '';
+  return [dateShortLabel(w.date), classTypeShortLabel(w.classType)].filter(Boolean).join(' ');
+}
+function applyAutoTitle(){
+  const newPrefix = autoTitlePrefix();
+  if(!newPrefix) return;
+  const current = workout.name || '';
+  if(!current.trim() || current === lastTitlePrefix){
+    workout.name = newPrefix;
+  } else if(lastTitlePrefix && current.startsWith(lastTitlePrefix)){
+    workout.name = newPrefix + current.slice(lastTitlePrefix.length);
+  }
+  // else: title has diverged from any known auto-prefix — it's fully custom now, leave it.
+  lastTitlePrefix = newPrefix;
+  const nameInput = document.getElementById('workoutName');
+  if(nameInput && document.activeElement !== nameInput) nameInput.value = workout.name;
+  save();
+}
+
 function newWorkout(){
-  return { name: "New Class", targetMinutes: 45, blocks: [] };
+  return { name: "", targetMinutes: 45, blocks: [] };
 }
 function newBlock(){
   return { _id: uid(), name: "New Block", rounds: 1, steps: [ { _id: uid(), label: "", sets: 1, work: 30, rest: 0 } ] };
@@ -573,7 +632,8 @@ function load(){
    EDITOR RENDER
 --------------------------------------------------------- */
 function renderEditor(){
-  document.getElementById('workoutName').value = workout.name;
+  const nameInputEl = document.getElementById('workoutName');
+  if(nameInputEl && document.activeElement !== nameInputEl) nameInputEl.value = workout.name;
   const dateInput = document.getElementById('classDate');
   if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
   const typeSelect = document.getElementById('classType');
@@ -713,8 +773,15 @@ function removeStep(bi, si){
   if(workout.blocks[bi].steps.length === 0) workout.blocks[bi].steps.push({_id:uid(), label:'', sets:1, work:30, rest:0});
   save(); renderEditor();
 }
-function onNameChange(){ workout.name = document.getElementById('workoutName').value; save(); }
-function setMeta(field, val){ workout[field] = val; save(); }
+function onNameChange(){
+  workout.name = document.getElementById('workoutName').value;
+  save();
+}
+function setMeta(field, val){
+  workout[field] = val;
+  if(field === 'classType') applyAutoTitle();
+  save();
+}
 
 function setDateField(val){
   const hintEl = document.getElementById('dateHint');
@@ -724,6 +791,7 @@ function setDateField(val){
   }
   if(hintEl) hintEl.textContent = '';
   workout.date = val;
+  applyAutoTitle();
   save();
 }
 
@@ -1267,18 +1335,21 @@ function renderPlaylist(){
   if(!wrap) return;
 
   // "Active" is the most recent work entry at-or-before the current position —
-  // during a rest, the movement you're resting from stays highlighted until the
-  // next movement's work segment actually starts.
+  // during a rest, the movement you're resting from is still "Now Playing" until
+  // the next movement's work segment actually starts. Up Next only lists what's
+  // strictly after that.
   let activeSeqIdx = -1;
   for(let i = 0; i <= seqIndex && i < sequence.length; i++){
     if(sequence[i].type === 'work') activeSeqIdx = i;
   }
 
   wrap.innerHTML = '';
+  let shown = 0;
   sequence.forEach((step, i) => {
-    if(step.type !== 'work') return;
+    if(step.type !== 'work' || i <= activeSeqIdx) return;
+    shown++;
     const row = document.createElement('div');
-    row.className = 'playlist-row ' + (i === activeSeqIdx ? 'active' : i < activeSeqIdx ? 'past' : 'upcoming');
+    row.className = 'playlist-row upcoming';
     let meta = step.blockName || '';
     if(step.roundsTotal > 1) meta += ' · Round ' + step.roundIndex + '/' + step.roundsTotal;
     if(step.setsTotal > 1) meta += ' · Set ' + step.setIndex + '/' + step.setsTotal;
@@ -1290,8 +1361,9 @@ function renderPlaylist(){
     wrap.appendChild(row);
   });
 
-  const activeEl = wrap.querySelector('.playlist-row.active');
-  if(activeEl) activeEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  if(shown === 0){
+    wrap.innerHTML = '<p class="muted-note" style="padding:8px 6px;">That\'s the last one — nothing queued up after this.</p>';
+  }
 }
 
 function tick(){
