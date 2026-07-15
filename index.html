@@ -351,14 +351,13 @@
         <span class="unit">min</span>
       </div>
 
-      <div class="toolbar">
+      <div class="toolbar" id="toolbarTop">
         <button class="btn primary" onclick="addBlock()">+ Add Block</button>
-        <button class="btn" onclick="loadSample()">Load Sample Class</button>
       </div>
 
       <div id="blocksWrap"></div>
 
-      <div class="toolbar">
+      <div class="toolbar hidden" id="toolbarBottom">
         <button class="btn primary" onclick="addBlock()">+ Add Block</button>
       </div>
     </div>
@@ -479,56 +478,6 @@ function setCurrentUser(name){
   try{ localStorage.setItem(CURRENT_USER_KEY, name || ''); }catch(e){}
   renderLibrary();
 }
-
-const SAMPLE = {
-  name: "7.7.26 IRON 45 — Push Pull Carry",
-  blocks: [
-    { name: "Core Activation", rounds: 1, steps: [
-      { label: "Dead bug (start on back)", sets: 1, work: 30, rest: 0 },
-      { label: "Side plank hip dip — right (roll to side)", sets: 1, work: 30, rest: 0 },
-      { label: "Side plank hip dip — left", sets: 1, work: 30, rest: 0 },
-      { label: "Bird dog — right side (rise to all fours)", sets: 1, work: 30, rest: 0 },
-      { label: "Bird dog — left side", sets: 1, work: 30, rest: 0 },
-      { label: "Bear hold shoulder taps — right (lift knees)", sets: 1, work: 20, rest: 0 },
-      { label: "Bear hold shoulder taps — left", sets: 1, work: 20, rest: 0 },
-      { label: "Plank shoulder tap (extend to plank)", sets: 1, work: 30, rest: 0 },
-    ]},
-    { name: "Warm-Up", rounds: 1, steps: [
-      { label: "Scap push-ups (stay in plank — no transition)", sets: 1, work: 30, rest: 0 },
-      { label: "Push-up to down dog to standing (bridge move)", sets: 1, work: 30, rest: 0 },
-      { label: "Arm circles forward (standing)", sets: 1, work: 20, rest: 0 },
-      { label: "Arm circles back", sets: 1, work: 20, rest: 0 },
-      { label: "Band pull-aparts (standing)", sets: 1, work: 30, rest: 0 },
-      { label: "Wall slides (standing)", sets: 1, work: 30, rest: 0 },
-    ]},
-    { name: "Block 1 — Push", rounds: 1, steps: [
-      { label: "Bench press — heaviest, tempo 3-1", sets: 4, work: 40, rest: 20 },
-      { label: "Bench press — decrease weight, tempo 2-2", sets: 3, work: 40, rest: 20 },
-      { label: "Push-up — bodyweight, to fatigue", sets: 1, work: 60, rest: 0 },
-    ]},
-    { name: "Block 2 — Pull", rounds: 1, steps: [
-      { label: "Bent-over dumbbell row", sets: 5, work: 40, rest: 20 },
-      { label: "Single-arm row — right", sets: 3, work: 40, rest: 0 },
-      { label: "Single-arm row — left", sets: 3, work: 40, rest: 20 },
-    ]},
-    { name: "Block 3 — Carry", rounds: 2, steps: [
-      { label: "Suitcase carry — right", sets: 1, work: 30, rest: 0 },
-      { label: "Suitcase carry — left", sets: 1, work: 30, rest: 15 },
-      { label: "Single-arm overhead press — right", sets: 1, work: 30, rest: 0 },
-      { label: "Single-arm overhead press — left", sets: 1, work: 30, rest: 15 },
-      { label: "Bicep curl — slow eccentric", sets: 1, work: 30, rest: 15 },
-    ]},
-    { name: "Finisher — Push. Pull. Carry.", rounds: 3, steps: [
-      { label: "Push-up with shoulder tap — Push (plank)", sets: 1, work: 15, rest: 0 },
-      { label: "Renegade row — right — Pull (plank)", sets: 1, work: 15, rest: 0 },
-      { label: "Renegade row — left — Pull", sets: 1, work: 15, rest: 0 },
-      { label: "Bear hold — Carry (hover, hands and knees)", sets: 1, work: 15, rest: 0 },
-    ]},
-    { name: "Close", rounds: 1, steps: [
-      { label: "6 slow breaths — 4 in, 8 out", sets: 1, work: 72, rest: 0 },
-    ]},
-  ]
-};
 
 function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
@@ -780,6 +729,12 @@ function renderEditor(){
   if(msgInput && document.activeElement !== msgInput) msgInput.innerHTML = workout.message || '';
   const targetInput = document.getElementById('targetMinutes');
   if(document.activeElement !== targetInput) targetInput.value = workout.targetMinutes || 45;
+
+  const toolbarTop = document.getElementById('toolbarTop');
+  const toolbarBottom = document.getElementById('toolbarBottom');
+  const hasBlocks = workout.blocks.length > 0;
+  if(toolbarTop) toolbarTop.classList.toggle('hidden', hasBlocks);
+  if(toolbarBottom) toolbarBottom.classList.toggle('hidden', !hasBlocks);
 
   const wrap = document.getElementById('blocksWrap');
   wrap.innerHTML = '';
@@ -1116,11 +1071,6 @@ function pickFilterClassType(value){
   setLibraryFilter('classType', value);
   closeAllCombos();
   renderFilterClassTypeCombo();
-}
-function loadSample(){
-  if(workout.blocks.length && !confirm('Replace current workout with the sample class?')) return;
-  workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
-  save(); renderEditor();
 }
 function buildNew(){
   if(workout.blocks.length && !confirm('Start a new class? This clears what you\'re currently building (save it first if you want to keep it).')) return;
