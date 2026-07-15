@@ -539,13 +539,13 @@ function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().t
 // selected/closed) and a longer DESCRIPTOR (only shown while browsing the
 // options, to help pick the right one).
 const CLASS_TYPE_OPTIONS = [
-  { value: "ECHO", descriptor: "Dance Cardio" },
-  { value: "IGNITE 45", descriptor: "HIIT Strength Training" },
-  { value: "IRON 45", descriptor: "Heavy Weight Lifting" },
-  { value: "GROUNDWRK", descriptor: "Mat Pilates" },
-  { value: "SYNC 45", descriptor: "Cycle" },
-  { value: "SYNC 60", descriptor: "Cycle" },
-  { value: "SYNC 30 x IRON 30", descriptor: "Cycle + Weights" },
+  { value: "ECHO", fullLabel: "ECHO - Dance Cardio" },
+  { value: "GROUNDWRK", fullLabel: "GROUNDWRK - Mat Pilates" },
+  { value: "IGNITE 45", fullLabel: "IGNITE 45 - HIIT Strength Training" },
+  { value: "IRON 45", fullLabel: "IRON 45 - Heavy Weight Lifting" },
+  { value: "SYNC 30 x IRON 30", fullLabel: "SYNC 30 x IRON 30" },
+  { value: "SYNC 45", fullLabel: "SYNC 45 - Cycle" },
+  { value: "SYNC 60", fullLabel: "SYNC 60 - Cycle" },
 ];
 // Back-compat: some already-saved classes stored the old combined
 // "TITLE - Descriptor" string. classTypeShortLabel() (below) strips
@@ -1066,9 +1066,9 @@ function onNameFieldBlur(el){
 /* ---------------------------------------------------------
    CLASS TYPE COMBO — a native <select> can't show different text
    while browsing vs. once picked, so this is a small custom
-   dropdown: the option list shows the long descriptor (e.g. "Heavy
-   Weight Lifting") to help you pick, but the closed display and
-   the stored value are always just the short title (e.g. "IRON 45").
+   dropdown: the option list shows the full class name (e.g. "IRON 45
+   - Heavy Weight Lifting") to help you pick, but the closed display
+   and the stored value are always just the short title (e.g. "IRON 45").
 --------------------------------------------------------- */
 function closeAllCombos(){
   document.querySelectorAll('.combo-menu').forEach(m => m.classList.add('hidden'));
@@ -1092,7 +1092,7 @@ function renderClassTypeCombo(){
   const current = CLASS_TYPE_OPTIONS.find(o => o.value === currentShort);
   display.textContent = current ? current.value : 'Select class type…';
   menu.innerHTML = CLASS_TYPE_OPTIONS.map(o => `
-    <button type="button" class="combo-option ${current && current.value === o.value ? 'active' : ''}" onclick="pickClassType('${escapeAttr(o.value)}')">${escapeAttr(o.descriptor)}</button>
+    <button type="button" class="combo-option ${current && current.value === o.value ? 'active' : ''}" onclick="pickClassType('${escapeAttr(o.value)}')">${escapeAttr(o.fullLabel)}</button>
   `).join('');
 }
 function pickClassType(value){
@@ -1108,7 +1108,7 @@ function renderFilterClassTypeCombo(){
   display.textContent = current ? current.value : 'All class types';
   const allBtn = `<button type="button" class="combo-option ${!libraryFilters.classType ? 'active' : ''}" onclick="pickFilterClassType('')">All class types</button>`;
   const rest = CLASS_TYPE_OPTIONS.map(o => `
-    <button type="button" class="combo-option ${libraryFilters.classType === o.value ? 'active' : ''}" onclick="pickFilterClassType('${escapeAttr(o.value)}')">${escapeAttr(o.descriptor)}</button>
+    <button type="button" class="combo-option ${libraryFilters.classType === o.value ? 'active' : ''}" onclick="pickFilterClassType('${escapeAttr(o.value)}')">${escapeAttr(o.fullLabel)}</button>
   `).join('');
   menu.innerHTML = allBtn + rest;
 }
