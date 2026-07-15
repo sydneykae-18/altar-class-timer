@@ -112,13 +112,22 @@
     white-space:nowrap; letter-spacing:0; overflow:hidden;}
   .col-head{display:grid; grid-template-columns:26px minmax(0,1fr) 46px 58px 58px 26px; gap:5px; margin-bottom:2px;}
 
+  .step-row.music-cols, .col-head.music-cols{grid-template-columns:26px 56px minmax(0,1fr) minmax(0,1fr) 26px;}
+
+  .format-toggle{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; flex:0 0 auto;}
+  .format-btn{background:transparent; border:none; color:var(--muted); padding:8px 14px; font-size:11px;
+    font-weight:700; letter-spacing:.04em; cursor:pointer;}
+  .format-btn.active{background:var(--accent); color:#0a0a0a;}
+
   @media (max-width:400px){
     main{padding:12px;}
     .block{padding:12px;}
     .step-row, .col-head{grid-template-columns:20px minmax(0,1fr) 36px 44px 44px 20px; gap:4px;}
+    .step-row.music-cols, .col-head.music-cols{grid-template-columns:20px 46px minmax(0,1fr) minmax(0,1fr) 20px;}
     .step-row input[type="number"]{padding:8px 1px;}
     .step-row .btn.icon-btn{width:20px; height:20px; font-size:11px;}
     .lbl{font-size:8px;}
+    .format-btn{padding:6px 10px; font-size:10px;}
   }
 
   .block-footer{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
@@ -216,6 +225,18 @@
   .playlist-row-label{font-family:var(--serif); font-size:15px;}
   .playlist-row-meta{font-size:11px; color:var(--muted); letter-spacing:.02em;}
   .playlist-row.upcoming{opacity:.65;}
+
+  .run-submode-toggle{width:fit-content; margin:0 auto 14px;}
+  .run-submode-toggle .format-btn{padding:10px 24px; font-size:12px;}
+
+  .song-block{width:100%; max-width:420px; margin:0 auto 14px; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px; padding:14px 16px; text-align:left;}
+  .song-block-name{font-family:var(--serif); font-size:16px; margin-bottom:8px; color:var(--muted);}
+  .song-row{display:grid; grid-template-columns:44px 1fr; gap:2px 12px; padding:8px 0; border-top:1px solid var(--line);}
+  .song-row:first-of-type{border-top:none;}
+  .song-bpm{font-family:var(--serif); font-size:15px; grid-row:1 / 3; align-self:center;}
+  .song-title{font-size:14px; font-weight:600;}
+  .song-focus{font-size:12px; color:var(--muted);}
 
   .jump-select{margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--muted);
     padding:10px 16px; border-radius:999px; font-family:var(--sans); text-align:center;
@@ -337,6 +358,13 @@
         </button>
         <div id="messageDrawerContent" class="message-drawer-content hidden"></div>
       </div>
+
+      <div id="runSubModeToggle" class="format-toggle run-submode-toggle hidden">
+        <button type="button" class="format-btn" id="subModeSyncBtn" onclick="setRunSubMode('music')">SYNC</button>
+        <button type="button" class="format-btn" id="subModeIronBtn" onclick="setRunSubMode('time')">IRON</button>
+      </div>
+
+      <div id="runMusicView" class="hidden"></div>
 
       <div id="runSetup" class="setup-screen">
         <h2>Ready to run</h2>
@@ -510,6 +538,50 @@ const INSTRUCTORS = [
 ].sort((a, b) => a.localeCompare(b));
 
 /* ---------------------------------------------------------
+   BLOCK FORMAT BY CLASS TYPE
+   'time'  — the existing sets x work x rest strength format (IGNITE 45, IRON 45, GROUNDWRK)
+   'music' — BPM / Song Title / Focus-Choreo columns, no timer in Run Class (SYNC 45, SYNC 60, ECHO)
+   'mixed' — SYNC 30 x IRON 30: each block picks its own format
+--------------------------------------------------------- */
+const CLASS_FORMAT_MODE = {
+  'ECHO': 'music',
+  'GROUNDWRK': 'time',
+  'IGNITE 45': 'time',
+  'IRON 45': 'time',
+  'SYNC 30 x IRON 30': 'mixed',
+  'SYNC 45': 'music',
+  'SYNC 60': 'music',
+};
+function classFormatMode(classType){
+  return CLASS_FORMAT_MODE[classTypeShortLabel(classType)] || 'time';
+}
+function defaultStepForFormat(format){
+  return format === 'music'
+    ? { _id: uid(), bpm: '', song: '', focus: '' }
+    : { _id: uid(), label: '', sets: 1, work: 30, rest: 0 };
+}
+// Keeps every block's format consistent with the class type. For fixed
+// class types ('time'/'music'), every block is forced to match — if a
+// block's format actually changes, its steps are reset since the two
+// shapes (sets/work/rest vs bpm/song/focus) aren't compatible. For
+// 'mixed' class types, each block keeps whatever format it already has
+// (defaulting new/invalid ones to 'music').
+function normalizeBlockFormats(w){
+  w = w || workout;
+  const mode = classFormatMode(w.classType);
+  (w.blocks || []).forEach(block => {
+    if(mode === 'mixed'){
+      if(block.format !== 'time' && block.format !== 'music') block.format = 'music';
+      return;
+    }
+    if(block.format !== mode){
+      block.format = mode;
+      block.steps = [ defaultStepForFormat(mode) ];
+    }
+  });
+}
+
+/* ---------------------------------------------------------
    DATE HELPERS — dates are stored/entered as MM/DD/YYYY
 --------------------------------------------------------- */
 function isValidMDY(str){
@@ -548,7 +620,8 @@ function ensureIds(w){
   }
   if(w.date == null || w.date === '' || !isValidMDY(w.date)) w.date = todayMDY();
   if(w.classType == null) w.classType = w.muscleGroup || '';
-  if(w.instructor == null) w.instructor = 'Sydney Wilhelms';
+  normalizeBlockFormats(w);
+  if(w.instructor == null) w.instructor = '';
   if(w.description == null) w.description = '';
   if(w.message == null) w.message = '';
   if(w.id === undefined) w.id = null;
@@ -607,8 +680,9 @@ function applyAutoTitle(){
 function newWorkout(){
   return { name: "", targetMinutes: 45, blocks: [] };
 }
-function newBlock(){
-  return { _id: uid(), name: "New Block", rounds: 1, steps: [ { _id: uid(), label: "", sets: 1, work: 30, rest: 0 } ] };
+function newBlock(format){
+  const fmt = format || 'time';
+  return { _id: uid(), name: "New Block", rounds: 1, format: fmt, steps: [ defaultStepForFormat(fmt) ] };
 }
 
 /* ---------------------------------------------------------
@@ -649,17 +723,27 @@ function renderEditor(){
 
   const wrap = document.getElementById('blocksWrap');
   wrap.innerHTML = '';
+  const classMode = classFormatMode(workout.classType);
   workout.blocks.forEach((block, bi) => {
     const div = document.createElement('div');
     div.className = 'block';
     div.dataset.id = block._id;
+    const format = block.format || 'time';
+
+    const formatToggle = classMode === 'mixed'
+      ? `<div class="format-toggle">
+          <button type="button" class="format-btn ${format==='music'?'active':''}" onclick="setBlockFormat(${bi},'music')">SYNC</button>
+          <button type="button" class="format-btn ${format==='time'?'active':''}" onclick="setBlockFormat(${bi},'time')">IRON</button>
+        </div>`
+      : '';
 
     const head = document.createElement('div');
     head.className = 'block-head';
     head.innerHTML = `
       <span class="drag-handle" title="Drag to reorder block">⠿</span>
       <input class="block-name" value="${escapeAttr(block.name)}" onchange="setBlockName(${bi}, this.value)">
-      <div class="rounds-wrap" title="Repeats the whole circuit of movements below, in order">Rounds
+      ${formatToggle}
+      <div class="rounds-wrap" title="Repeats the whole circuit below, in order">Rounds
         <input class="rounds-input" type="number" min="1" value="${block.rounds}" onchange="setBlockRounds(${bi}, this.value)">
       </div>
       <button class="btn small danger" onclick="removeBlock(${bi})">Delete</button>
@@ -667,22 +751,37 @@ function renderEditor(){
     div.appendChild(head);
 
     const colHead = document.createElement('div');
-    colHead.className = 'col-head';
-    colHead.innerHTML = `<span class="lbl"></span><span class="lbl" style="text-align:left;">MOVEMENT</span><span class="lbl">SETS</span><span class="lbl">WORK s</span><span class="lbl">REST s</span><span class="lbl"></span>`;
+    if(format === 'music'){
+      colHead.className = 'col-head music-cols';
+      colHead.innerHTML = `<span class="lbl"></span><span class="lbl">BPM</span><span class="lbl" style="text-align:left;">SONG TITLE</span><span class="lbl" style="text-align:left;">FOCUS/CHOREO</span><span class="lbl"></span>`;
+    } else {
+      colHead.className = 'col-head';
+      colHead.innerHTML = `<span class="lbl"></span><span class="lbl" style="text-align:left;">MOVEMENT</span><span class="lbl">SETS</span><span class="lbl">WORK s</span><span class="lbl">REST s</span><span class="lbl"></span>`;
+    }
     div.appendChild(colHead);
 
     block.steps.forEach((step, si) => {
       const row = document.createElement('div');
-      row.className = 'step-row';
+      row.className = format === 'music' ? 'step-row music-cols' : 'step-row';
       row.dataset.id = step._id;
-      row.innerHTML = `
-        <span class="step-handle" title="Drag to reorder movement">⠿</span>
-        <input type="text" placeholder="Movement name" value="${escapeAttr(step.label)}" onchange="setStepField(${bi},${si},'label',this.value)">
-        <input type="number" min="1" value="${step.sets||1}" title="Sets" onchange="setStepField(${bi},${si},'sets',this.value)">
-        <input type="number" min="0" value="${step.work}" title="Work seconds" onchange="setStepField(${bi},${si},'work',this.value)">
-        <input type="number" min="0" value="${step.rest}" title="Rest seconds" onchange="setStepField(${bi},${si},'rest',this.value)">
-        <button class="btn small danger icon-btn" onclick="removeStep(${bi},${si})">✕</button>
-      `;
+      if(format === 'music'){
+        row.innerHTML = `
+          <span class="step-handle" title="Drag to reorder song">⠿</span>
+          <input type="number" min="0" placeholder="BPM" value="${escapeAttr(step.bpm)}" onchange="setStepField(${bi},${si},'bpm',this.value)">
+          <input type="text" placeholder="Song title" value="${escapeAttr(step.song)}" onchange="setStepField(${bi},${si},'song',this.value)">
+          <input type="text" placeholder="Focus / choreo notes" value="${escapeAttr(step.focus)}" onchange="setStepField(${bi},${si},'focus',this.value)">
+          <button class="btn small danger icon-btn" onclick="removeStep(${bi},${si})">✕</button>
+        `;
+      } else {
+        row.innerHTML = `
+          <span class="step-handle" title="Drag to reorder movement">⠿</span>
+          <input type="text" placeholder="Movement name" value="${escapeAttr(step.label)}" onchange="setStepField(${bi},${si},'label',this.value)">
+          <input type="number" min="1" value="${step.sets||1}" title="Sets" onchange="setStepField(${bi},${si},'sets',this.value)">
+          <input type="number" min="0" value="${step.work}" title="Work seconds" onchange="setStepField(${bi},${si},'work',this.value)">
+          <input type="number" min="0" value="${step.rest}" title="Rest seconds" onchange="setStepField(${bi},${si},'rest',this.value)">
+          <button class="btn small danger icon-btn" onclick="removeStep(${bi},${si})">✕</button>
+        `;
+      }
       div.appendChild(row);
 
       const stepHandle = row.querySelector('.step-handle');
@@ -695,10 +794,11 @@ function renderEditor(){
 
     const footer = document.createElement('div');
     footer.className = 'block-footer';
-    footer.innerHTML = `
-      <button class="btn small" onclick="addStep(${bi})">+ Movement</button>
-      <span class="block-time">${fmtTime(blockDuration(block))} total</span>
-    `;
+    footer.innerHTML = format === 'music'
+      ? `<button class="btn small" onclick="addStep(${bi})">+ Song</button>
+         <span class="block-time">${block.steps.length} song${block.steps.length===1?'':'s'}</span>`
+      : `<button class="btn small" onclick="addStep(${bi})">+ Movement</button>
+         <span class="block-time">${fmtTime(blockDuration(block))} total</span>`;
     div.appendChild(footer);
 
     wrap.appendChild(div);
@@ -758,19 +858,38 @@ function escapeAttr(s){
 
 function setBlockName(bi, val){ workout.blocks[bi].name = val; save(); updateTotalBar(); }
 function setBlockRounds(bi, val){ workout.blocks[bi].rounds = Math.max(1, parseInt(val)||1); save(); renderEditor(); }
+function setBlockFormat(bi, fmt){
+  const block = workout.blocks[bi];
+  if(block.format === fmt) return;
+  const hasContent = block.steps.some(s => String(s.label || s.song || s.bpm || s.focus || '').trim());
+  if(hasContent && !confirm('Switching this block\'s format clears its movements/songs — they use different fields. Continue?')) return;
+  block.format = fmt;
+  block.steps = [ defaultStepForFormat(fmt) ];
+  save(); renderEditor();
+}
 function setStepField(bi, si, field, val){
   const step = workout.blocks[bi].steps[si];
-  if(field === 'label') step.label = val;
+  if(field === 'label' || field === 'song' || field === 'focus') step[field] = val;
   else if(field === 'sets') step.sets = Math.max(1, parseInt(val)||1);
+  else if(field === 'bpm') step.bpm = val === '' ? '' : Math.max(0, parseInt(val)||0);
   else step[field] = Math.max(0, parseInt(val)||0);
   save(); renderEditor();
 }
-function addBlock(){ workout.blocks.push(newBlock()); save(); renderEditor(); }
+function addBlock(){
+  const mode = classFormatMode(workout.classType);
+  workout.blocks.push(newBlock(mode === 'mixed' ? 'music' : mode));
+  save(); renderEditor();
+}
 function removeBlock(bi){ workout.blocks.splice(bi,1); save(); renderEditor(); }
-function addStep(bi){ workout.blocks[bi].steps.push({_id:uid(), label:'', sets:1, work:30, rest:0}); save(); renderEditor(); }
+function addStep(bi){
+  const block = workout.blocks[bi];
+  block.steps.push(defaultStepForFormat(block.format || 'time'));
+  save(); renderEditor();
+}
 function removeStep(bi, si){
-  workout.blocks[bi].steps.splice(si,1);
-  if(workout.blocks[bi].steps.length === 0) workout.blocks[bi].steps.push({_id:uid(), label:'', sets:1, work:30, rest:0});
+  const block = workout.blocks[bi];
+  block.steps.splice(si,1);
+  if(block.steps.length === 0) block.steps.push(defaultStepForFormat(block.format || 'time'));
   save(); renderEditor();
 }
 function onNameChange(){
@@ -779,8 +898,13 @@ function onNameChange(){
 }
 function setMeta(field, val){
   workout[field] = val;
-  if(field === 'classType') applyAutoTitle();
-  save();
+  if(field === 'classType'){
+    normalizeBlockFormats();
+    applyAutoTitle(); // also saves
+    renderEditor();
+  } else {
+    save();
+  }
 }
 
 function setDateField(val){
@@ -922,7 +1046,7 @@ function showScreen(which){
   document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
   document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
   document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
-  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); }
+  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); }
   if(which==='library'){ refreshLibrary(); }
 }
 
@@ -1161,10 +1285,89 @@ let running = false;
 let tickHandle = null;
 let audioCtx = null;
 let wakeLock = null;
+let runSubMode = null; // 'music' | 'time' — only meaningful when classFormatMode is 'mixed'
 
-function buildSequence(){
+/* ---------------------------------------------------------
+   RUN MODE SETUP — decides whether Run Class shows the normal
+   timer UI, a no-timer song list (SYNC/ECHO classes), or a
+   SYNC/IRON toggle between the two (SYNC 30 x IRON 30).
+--------------------------------------------------------- */
+function setupRunModeUI(){
+  const mode = classFormatMode(workout.classType);
+  const toggle = document.getElementById('runSubModeToggle');
+  const musicView = document.getElementById('runMusicView');
+  const setup = document.getElementById('runSetup');
+  const active = document.getElementById('runActive');
+
+  if(mode === 'music'){
+    toggle.classList.add('hidden');
+    setup.classList.add('hidden');
+    active.classList.add('hidden');
+    musicView.classList.remove('hidden');
+    renderSongListView(null);
+    return;
+  }
+
+  if(mode === 'mixed'){
+    toggle.classList.remove('hidden');
+    if(runSubMode !== 'music' && runSubMode !== 'time'){
+      runSubMode = workout.blocks.some(b => (b.format||'time') === 'music') ? 'music' : 'time';
+    }
+    const syncBtn = document.getElementById('subModeSyncBtn');
+    const ironBtn = document.getElementById('subModeIronBtn');
+    if(syncBtn) syncBtn.classList.toggle('active', runSubMode === 'music');
+    if(ironBtn) ironBtn.classList.toggle('active', runSubMode === 'time');
+
+    if(runSubMode === 'music'){
+      setup.classList.add('hidden');
+      active.classList.add('hidden');
+      musicView.classList.remove('hidden');
+      renderSongListView('music');
+    } else {
+      musicView.classList.add('hidden');
+      if(!running && seqIndex === 0){ setup.classList.remove('hidden'); active.classList.add('hidden'); }
+    }
+    return;
+  }
+
+  // mode === 'time' — normal behavior, nothing new to show/hide here
+  toggle.classList.add('hidden');
+  musicView.classList.add('hidden');
+}
+
+function setRunSubMode(m){
+  if(running){
+    if(!confirm('Switch views? This will stop the current timer.')) return;
+    stopRun();
+  }
+  runSubMode = m;
+  setupRunModeUI();
+}
+
+function renderSongListView(formatFilter){
+  const wrap = document.getElementById('runMusicView');
+  if(!wrap) return;
+  const blocks = workout.blocks.filter(b => !formatFilter || (b.format||'time') === formatFilter);
+  if(!blocks.length || !blocks.some(b => b.steps.some(s => s.song || s.bpm || s.focus))){
+    wrap.innerHTML = '<p class="muted-note" style="text-align:center;">Add songs to this class in the Build tab.</p>';
+    return;
+  }
+  wrap.innerHTML = blocks.map(block => {
+    const rows = block.steps.map(s => `
+      <div class="song-row">
+        <span class="song-bpm">${escapeAttr(s.bpm || '—')}</span>
+        <span class="song-title">${escapeAttr(s.song || 'Untitled')}</span>
+        <span class="song-focus">${escapeAttr(s.focus || '')}</span>
+      </div>
+    `).join('');
+    return `<div class="song-block"><div class="song-block-name">${escapeAttr(block.name)}</div>${rows}</div>`;
+  }).join('');
+}
+
+function buildSequence(formatFilter){
   const seq = [];
   workout.blocks.forEach((block, bi) => {
+    if(formatFilter && (block.format || 'time') !== formatFilter) return;
     const rounds = block.rounds || 1;
     for(let r=0; r<rounds; r++){
       block.steps.forEach((step) => {
@@ -1186,7 +1389,7 @@ function buildSequence(){
 }
 
 function prepareRunSummary(){
-  const seq = buildSequence();
+  const seq = buildSequence('time');
   document.getElementById('runSummary').textContent = seq.length
     ? `${workout.name} — ${seq.length} timed segments, ${fmtTime(totalDuration())} total. Tap Start when you're ready.`
     : 'Add at least one movement in the Build tab before starting.';
@@ -1226,7 +1429,7 @@ function releaseWake(){
 }
 
 function startRun(){
-  sequence = buildSequence();
+  sequence = buildSequence('time');
   if(sequence.length === 0){ alert('Add movements in the Build tab first.'); return; }
   ensureAudio();
   requestWake();
@@ -1422,15 +1625,17 @@ function addTime(sec){
   renderRunFrame();
 }
 
-function endRun(){
-  if(!confirm('End this class run?')) return;
+function stopRun(){
   clearInterval(tickHandle);
   running = false;
   releaseWake();
   document.getElementById('runActive').classList.add('hidden');
   document.getElementById('runSetup').classList.remove('hidden');
-  document.getElementById('totalBar').classList.remove('hidden');
   prepareRunSummary();
+}
+function endRun(){
+  if(!confirm('End this class run?')) return;
+  stopRun();
 }
 
 /* ---------------------------------------------------------
@@ -1461,10 +1666,13 @@ function endRun(){
   } else if(localDraft && localDraft.blocks && localDraft.blocks.length){
     workout = ensureIds(localDraft);
   } else {
-    workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
+    // First-ever open on this device, nothing saved anywhere yet — start from a
+    // clean blank class (today's date, everything else empty), not the sample.
+    workout = ensureIds(newWorkout());
   }
   save();
   renderEditor();
+  showScreen('editor');
 })();
 </script>
 </body>
