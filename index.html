@@ -161,6 +161,18 @@
   .lib-filters select, .lib-filters input[type="text"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
     padding:9px 12px; border-radius:10px; font-size:16px; flex:1; min-width:140px;}
   .lib-filters .btn{flex:0 0 auto;}
+  .lib-filters .combo{flex:1; min-width:140px;}
+
+  /* ---- Class type combo (descriptor while choosing, short title once picked) ---- */
+  .combo{position:relative;}
+  .combo-display{width:100%; text-align:left; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 10px; border-radius:10px; font-size:16px; cursor:pointer; font-family:var(--sans);}
+  .combo-menu{position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:6px; z-index:20; max-height:240px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .combo-option{display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--text);
+    padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer; font-family:var(--sans);}
+  .combo-option:active{background:var(--panel2);}
+  .combo-option.active{background:var(--accent); color:#0a0a0a;}
 
   .save-status{font-size:12px; color:var(--muted); align-self:center;}
   .lib-status{font-size:12px; color:var(--muted); margin-bottom:10px;}
@@ -274,7 +286,8 @@
 
   <div class="whoami-bar">
     <span class="whoami-label">You are:</span>
-    <input type="text" id="whoamiInput" list="instructorList" placeholder="Select or type your name" onchange="setCurrentUser(this.value)">
+    <input type="text" id="whoamiInput" list="instructorList" placeholder="Select or type your name"
+      onchange="setCurrentUser(this.value)" onfocus="onNameFieldFocus(this)" onblur="onNameFieldBlur(this)">
     <span class="whoami-hint">Used to track who created each class and to enable deleting your own.</span>
   </div>
 
@@ -285,7 +298,7 @@
         <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
         <div class="title-row-actions">
           <button class="btn good" onclick="saveClass()">Save Class</button>
-          <button class="btn danger ghost" onclick="clearAll()">Clear All</button>
+          <button class="btn danger ghost" onclick="buildNew()">Build New</button>
         </div>
       </div>
       <div class="save-status-row"><span class="save-status" id="saveStatus"></span></div>
@@ -297,15 +310,16 @@
           <span class="field-hint" id="dateHint"></span>
         </div>
         <div class="meta-field">
-          <label for="classType">Class type</label>
-          <select id="classType" onchange="setMeta('classType', this.value)">
-            <option value="">Select class type…</option>
-            <!-- CLASS_TYPE_OPTIONS -->
-          </select>
+          <label for="classTypeDisplay">Class type</label>
+          <div class="combo" id="classTypeCombo">
+            <button type="button" class="combo-display" id="classTypeDisplay" onclick="toggleCombo('classType')">Select class type…</button>
+            <div class="combo-menu hidden" id="classTypeMenu"></div>
+          </div>
         </div>
         <div class="meta-field">
           <label for="classInstructor">Instructor</label>
-          <input type="text" id="classInstructor" list="instructorList" placeholder="Type or select a name" onchange="setMeta('instructor', this.value)">
+          <input type="text" id="classInstructor" list="instructorList" placeholder="Type or select a name"
+            onchange="setMeta('instructor', this.value)" onfocus="onNameFieldFocus(this)" onblur="onNameFieldBlur(this)">
           <datalist id="instructorList">
             <!-- INSTRUCTOR_OPTIONS -->
           </datalist>
@@ -409,10 +423,10 @@
     <!-- LIBRARY -->
     <div id="screenLibrary" class="hidden">
       <div class="lib-filters">
-        <select id="filterClassType" onchange="setLibraryFilter('classType', this.value)">
-          <option value="">All class types</option>
-          <!-- CLASS_TYPE_OPTIONS -->
-        </select>
+        <div class="combo" id="filterClassTypeCombo">
+          <button type="button" class="combo-display" id="filterClassTypeDisplay" onclick="toggleCombo('filterClassType')">All class types</button>
+          <div class="combo-menu hidden" id="filterClassTypeMenu"></div>
+        </div>
         <select id="filterInstructor" onchange="setLibraryFilter('instructor', this.value)">
           <option value="">All instructors</option>
           <!-- INSTRUCTOR_OPTIONS -->
@@ -521,21 +535,39 @@ function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().t
 /* ---------------------------------------------------------
    FIXED OPTION LISTS
 --------------------------------------------------------- */
-const CLASS_TYPES = [
-  "ECHO- Dance Cardio",
-  "GROUNDWRK - Mat Pilates",
-  "IGNITE 45- HIIT Strength Training",
-  "IRON 45 - Heavy Weight Lifting",
-  "MATS x MARGS x MUSIC",
-  "SYNC 30 x IRON 30",
-  "SYNC 45- Cycle",
-  "SYNC 60- Cycle",
+// Each class type has a short TITLE (what's stored, and all that shows once
+// selected/closed) and a longer DESCRIPTOR (only shown while browsing the
+// options, to help pick the right one).
+const CLASS_TYPE_OPTIONS = [
+  { value: "ECHO", descriptor: "Dance Cardio" },
+  { value: "IGNITE 45", descriptor: "HIIT Strength Training" },
+  { value: "IRON 45", descriptor: "Heavy Weight Lifting" },
+  { value: "GROUNDWRK", descriptor: "Mat Pilates" },
+  { value: "SYNC 45", descriptor: "Cycle" },
+  { value: "SYNC 60", descriptor: "Cycle" },
+  { value: "SYNC 30 x IRON 30", descriptor: "Cycle + Weights" },
 ];
+// Back-compat: some already-saved classes stored the old combined
+// "TITLE - Descriptor" string. classTypeShortLabel() (below) strips
+// anything after a dash, so those still resolve to the right short title.
+const CLASS_TYPES = CLASS_TYPE_OPTIONS.map(o => o.value);
+
 const INSTRUCTORS = [
   "Ally White", "April Alford", "Audri Saylors", "Chloe Riddle", "Courtland Olson",
   "Kaleigh Molgaard", "Kenna Lightle", "Krysta Winkelmann", "Madison Combs",
   "Sydney Wilhelms", "Vern Davis",
 ].sort((a, b) => a.localeCompare(b));
+// Display-only short form — "Sydney Wilhelms" -> "Sydney W." — used
+// everywhere an instructor name is shown or picked, since full last names
+// aren't needed day-to-day. The full name is never stored anymore for new
+// picks (short form is used directly as the instructor value); createdBy/
+// accountability rides on the separate "You are" field, not this one.
+function shortInstructorName(name){
+  const parts = String(name || '').trim().split(/\s+/);
+  if(parts.length < 2) return name || '';
+  return parts[0] + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+}
+const INSTRUCTOR_SHORT_NAMES = INSTRUCTORS.map(shortInstructorName);
 
 /* ---------------------------------------------------------
    BLOCK FORMAT BY CLASS TYPE
@@ -560,21 +592,46 @@ function defaultStepForFormat(format){
     ? { _id: uid(), bpm: '', song: '', focus: '' }
     : { _id: uid(), label: '', sets: 1, work: 30, rest: 0 };
 }
+// Looks at a step's actual fields to guess which format it was built for,
+// independent of any .format tag on its parent block. Used so legacy blocks
+// (saved before the format concept existed) can be tagged correctly WITHOUT
+// wiping their real content — we only ever reset steps when they are a
+// genuine, confirmed shape mismatch, not just "no tag yet".
+function inferStepFormat(step){
+  if(!step) return null;
+  const hasMusic = !!(step.song || step.bpm !== undefined && step.bpm !== '' || step.focus);
+  const hasTime = !!(step.label || step.work !== undefined && step.work !== '' || (step.rest !== undefined && step.rest !== ''));
+  if(hasMusic && !hasTime) return 'music';
+  if(hasTime && !hasMusic) return 'time';
+  return null; // ambiguous (e.g. brand-new blank step) — can't tell, don't guess
+}
 // Keeps every block's format consistent with the class type. For fixed
-// class types ('time'/'music'), every block is forced to match — if a
-// block's format actually changes, its steps are reset since the two
-// shapes (sets/work/rest vs bpm/song/focus) aren't compatible. For
-// 'mixed' class types, each block keeps whatever format it already has
-// (defaulting new/invalid ones to 'music').
+// class types ('time'/'music'), a block missing a .format tag (legacy data)
+// is tagged in place based on its actual step shape — steps are only reset
+// when they're a confirmed, genuine mismatch with the class type's format,
+// never just because the tag was absent. For 'mixed' class types, each
+// block keeps whatever format it already has (inferring from steps, then
+// defaulting new/invalid ones to 'music').
 function normalizeBlockFormats(w){
   w = w || workout;
   const mode = classFormatMode(w.classType);
   (w.blocks || []).forEach(block => {
+    const inferred = block.steps && block.steps.length ? inferStepFormat(block.steps[0]) : null;
     if(mode === 'mixed'){
-      if(block.format !== 'time' && block.format !== 'music') block.format = 'music';
+      if(block.format !== 'time' && block.format !== 'music') block.format = inferred || 'music';
+      return;
+    }
+    if(!block.format){
+      // No tag yet (legacy block). Tag it as this class's mode, and only wipe
+      // steps if we can positively tell they're the wrong shape for that mode.
+      block.format = mode;
+      if(inferred && inferred !== mode){
+        block.steps = [ defaultStepForFormat(mode) ];
+      }
       return;
     }
     if(block.format !== mode){
+      // Already explicitly tagged with a conflicting format — a real mismatch.
       block.format = mode;
       block.steps = [ defaultStepForFormat(mode) ];
     }
@@ -621,7 +678,11 @@ function ensureIds(w){
   if(w.date == null || w.date === '' || !isValidMDY(w.date)) w.date = todayMDY();
   if(w.classType == null) w.classType = w.muscleGroup || '';
   normalizeBlockFormats(w);
+  // Normalize legacy full-name instructor values ("Sydney Wilhelms") to the
+  // short display form ("Sydney W.") on load, so the Build page always shows
+  // (and re-saves) the short form consistently going forward.
   if(w.instructor == null) w.instructor = '';
+  else w.instructor = shortInstructorName(w.instructor);
   if(w.description == null) w.description = '';
   if(w.message == null) w.message = '';
   if(w.id === undefined) w.id = null;
@@ -710,8 +771,7 @@ function renderEditor(){
   if(nameInputEl && document.activeElement !== nameInputEl) nameInputEl.value = workout.name;
   const dateInput = document.getElementById('classDate');
   if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
-  const typeSelect = document.getElementById('classType');
-  if(typeSelect && document.activeElement !== typeSelect) typeSelect.value = workout.classType || '';
+  renderClassTypeCombo();
   const instrInput = document.getElementById('classInstructor');
   if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
   const descInput = document.getElementById('classDescription');
@@ -966,47 +1026,105 @@ function onMessageInput(){
 }
 
 function populateStaticOptions(){
-  const typeSelect = document.getElementById('classType');
-  if(typeSelect && typeSelect.options.length <= 1){
-    CLASS_TYPES.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t; opt.textContent = t;
-      typeSelect.appendChild(opt);
-    });
-  }
   const instrList = document.getElementById('instructorList');
   if(instrList && instrList.options.length === 0){
-    INSTRUCTORS.forEach(n => {
+    INSTRUCTOR_SHORT_NAMES.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n;
       instrList.appendChild(opt);
     });
   }
-  const filterType = document.getElementById('filterClassType');
-  if(filterType && filterType.options.length <= 1){
-    CLASS_TYPES.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t; opt.textContent = t;
-      filterType.appendChild(opt);
-    });
-  }
   const filterInstr = document.getElementById('filterInstructor');
   if(filterInstr && filterInstr.options.length <= 1){
-    INSTRUCTORS.forEach(n => {
+    INSTRUCTOR_SHORT_NAMES.forEach(n => {
       const opt = document.createElement('option');
       opt.value = n; opt.textContent = n;
       filterInstr.appendChild(opt);
     });
   }
+  renderClassTypeCombo();
+  renderFilterClassTypeCombo();
+}
+
+/* ---------------------------------------------------------
+   NAME FIELDS (Instructor / "You are") — datalist inputs don't
+   reliably reopen their full suggestion list once already filled
+   with a value on mobile Safari. Clearing on focus (and restoring
+   on blur if nothing was picked) forces the whole list to show
+   every time the field is tapped.
+--------------------------------------------------------- */
+function onNameFieldFocus(el){
+  el.dataset.prevValue = el.value;
+  el.value = '';
+}
+function onNameFieldBlur(el){
+  if(el.value.trim() === '' && el.dataset.prevValue){
+    el.value = el.dataset.prevValue;
+  }
+}
+
+/* ---------------------------------------------------------
+   CLASS TYPE COMBO — a native <select> can't show different text
+   while browsing vs. once picked, so this is a small custom
+   dropdown: the option list shows the long descriptor (e.g. "Heavy
+   Weight Lifting") to help you pick, but the closed display and
+   the stored value are always just the short title (e.g. "IRON 45").
+--------------------------------------------------------- */
+function closeAllCombos(){
+  document.querySelectorAll('.combo-menu').forEach(m => m.classList.add('hidden'));
+}
+function toggleCombo(which){
+  const menu = document.getElementById(which + 'Menu');
+  if(!menu) return;
+  const isOpen = !menu.classList.contains('hidden');
+  closeAllCombos();
+  if(!isOpen) menu.classList.remove('hidden');
+}
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.combo')) closeAllCombos();
+});
+
+function renderClassTypeCombo(){
+  const display = document.getElementById('classTypeDisplay');
+  const menu = document.getElementById('classTypeMenu');
+  if(!display || !menu || !workout) return;
+  const currentShort = classTypeShortLabel(workout.classType);
+  const current = CLASS_TYPE_OPTIONS.find(o => o.value === currentShort);
+  display.textContent = current ? current.value : 'Select class type…';
+  menu.innerHTML = CLASS_TYPE_OPTIONS.map(o => `
+    <button type="button" class="combo-option ${current && current.value === o.value ? 'active' : ''}" onclick="pickClassType('${escapeAttr(o.value)}')">${escapeAttr(o.descriptor)}</button>
+  `).join('');
+}
+function pickClassType(value){
+  setMeta('classType', value);
+  closeAllCombos();
+}
+
+function renderFilterClassTypeCombo(){
+  const display = document.getElementById('filterClassTypeDisplay');
+  const menu = document.getElementById('filterClassTypeMenu');
+  if(!display || !menu) return;
+  const current = CLASS_TYPE_OPTIONS.find(o => o.value === libraryFilters.classType);
+  display.textContent = current ? current.value : 'All class types';
+  const allBtn = `<button type="button" class="combo-option ${!libraryFilters.classType ? 'active' : ''}" onclick="pickFilterClassType('')">All class types</button>`;
+  const rest = CLASS_TYPE_OPTIONS.map(o => `
+    <button type="button" class="combo-option ${libraryFilters.classType === o.value ? 'active' : ''}" onclick="pickFilterClassType('${escapeAttr(o.value)}')">${escapeAttr(o.descriptor)}</button>
+  `).join('');
+  menu.innerHTML = allBtn + rest;
+}
+function pickFilterClassType(value){
+  setLibraryFilter('classType', value);
+  closeAllCombos();
+  renderFilterClassTypeCombo();
 }
 function loadSample(){
   if(workout.blocks.length && !confirm('Replace current workout with the sample class?')) return;
   workout = ensureIds(JSON.parse(JSON.stringify(SAMPLE)));
   save(); renderEditor();
 }
-function clearAll(){
-  if(!confirm('Clear the whole workout?')) return;
-  workout = newWorkout();
+function buildNew(){
+  if(workout.blocks.length && !confirm('Start a new class? This clears what you\'re currently building (save it first if you want to keep it).')) return;
+  workout = ensureIds(newWorkout());
   save(); renderEditor();
 }
 function blockDuration(block){
@@ -1128,8 +1246,8 @@ function renderLibrary(){
 
   let filtered = library.filter(cls => {
     const type = cls.classType || cls.muscleGroup || '';
-    if(libraryFilters.classType && type !== libraryFilters.classType) return false;
-    if(libraryFilters.instructor && (cls.instructor || '') !== libraryFilters.instructor) return false;
+    if(libraryFilters.classType && classTypeShortLabel(type) !== libraryFilters.classType) return false;
+    if(libraryFilters.instructor && shortInstructorName(cls.instructor || '') !== libraryFilters.instructor) return false;
     if(libraryFilters.keyword){
       const kw = libraryFilters.keyword.toLowerCase();
       const haystack = [cls.name, cls.description, cls.message, type, cls.instructor].filter(Boolean).join(' ').toLowerCase();
@@ -1152,18 +1270,18 @@ function renderLibrary(){
 
   const me = getCurrentUser();
   filtered.forEach(cls => {
-    const type = cls.classType || cls.muscleGroup || '—';
-    const isOwner = me && norm(cls.createdBy) === norm(me);
+    const type = classTypeShortLabel(cls.classType || cls.muscleGroup || '') || '—';
+    const isOwner = me && norm(shortInstructorName(cls.createdBy)) === norm(shortInstructorName(me));
     const deleteControl = isOwner
       ? `<button class="btn small danger" onclick="deleteClass('${cls.id}')">Delete</button>`
-      : `<span class="owner-note">Only ${escapeAttr(cls.createdBy || 'the creator')} can delete</span>`;
+      : `<span class="owner-note">Only ${escapeAttr(shortInstructorName(cls.createdBy) || 'the creator')} can delete</span>`;
     const card = document.createElement('div');
     card.className = 'class-card';
     card.innerHTML = `
       <div class="class-card-main">
         <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
         <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
-        <div class="class-card-meta">${escapeAttr(type)} · ${escapeAttr(cls.instructor || '—')} · created by ${escapeAttr(cls.createdBy || 'Unknown')}</div>
+        <div class="class-card-meta">${escapeAttr(type)} · ${escapeAttr(shortInstructorName(cls.instructor) || '—')} · created by ${escapeAttr(shortInstructorName(cls.createdBy) || 'Unknown')}</div>
         ${cls.description ? `<div class="class-card-desc">${escapeAttr(cls.description)}</div>` : ''}
       </div>
       <div class="class-card-actions">
@@ -1207,8 +1325,8 @@ async function deleteClass(id){
     alert('Select "You are" at the top of the app before deleting a class.');
     return;
   }
-  if(norm(cls.createdBy) !== norm(me)){
-    alert('Only ' + (cls.createdBy || 'the creator') + ' can delete this class.');
+  if(norm(shortInstructorName(cls.createdBy)) !== norm(shortInstructorName(me))){
+    alert('Only ' + shortInstructorName(cls.createdBy || 'the creator') + ' can delete this class.');
     return;
   }
   if(!confirm('Delete "' + cls.name + '"? This cannot be undone, and will be logged.')) return;
@@ -1217,7 +1335,7 @@ async function deleteClass(id){
     if(!res.ok){
       const data = await res.json().catch(() => ({}));
       if(res.status === 403){
-        alert('Only ' + (data.createdBy || 'the creator') + ' can delete this class.');
+        alert('Only ' + shortInstructorName(data.createdBy || 'the creator') + ' can delete this class.');
       } else {
         alert('Could not delete — check your connection and try again.');
       }
@@ -1265,10 +1383,10 @@ function renderDeletionLog(log){
     <div class="log-row">
       <div class="log-row-main">
         <b>${escapeAttr(entry.name || 'Untitled class')}</b>
-        <span class="muted-note">${escapeAttr(entry.classType || '')}</span>
+        <span class="muted-note">${escapeAttr(classTypeShortLabel(entry.classType || ''))}</span>
       </div>
       <div class="log-row-meta">
-        Created by ${escapeAttr(entry.createdBy || 'Unknown')} · deleted by ${escapeAttr(entry.deletedBy || 'Unknown')} on ${escapeAttr(new Date(entry.deletedAt).toLocaleString())}
+        Created by ${escapeAttr(shortInstructorName(entry.createdBy) || 'Unknown')} · deleted by ${escapeAttr(shortInstructorName(entry.deletedBy) || 'Unknown')} on ${escapeAttr(new Date(entry.deletedAt).toLocaleString())}
       </div>
     </div>
   `).join('');
@@ -1599,7 +1717,8 @@ function finishRun(){
   document.getElementById('movementName').textContent = 'Class complete';
   document.getElementById('progressLine').textContent = 'Nice work.';
   document.getElementById('timerDisplay').textContent = '0:00';
-  document.getElementById('nextUp').textContent = '';
+  const playlistScroll = document.getElementById('playlistScroll');
+  if(playlistScroll) playlistScroll.innerHTML = '<p class="muted-note" style="padding:8px 6px;">Class complete — nothing queued up.</p>';
   document.getElementById('playPauseBtn').textContent = '▶ Restart';
   releaseWake();
 }
@@ -1644,7 +1763,12 @@ function endRun(){
 (async function init(){
   populateStaticOptions();
   const whoamiInput = document.getElementById('whoamiInput');
-  if(whoamiInput) whoamiInput.value = getCurrentUser();
+  // Normalize a legacy full-name "You are" value to the short form once, so
+  // it displays consistently and matches future short-form createdBy values.
+  const rawUser = getCurrentUser();
+  const shortUser = shortInstructorName(rawUser);
+  if(rawUser && shortUser !== rawUser) setCurrentUser(shortUser);
+  if(whoamiInput) whoamiInput.value = shortUser;
   const localDraft = load();
   await refreshLibrary(); // populates `library` from the cloud before deciding what to show
 
