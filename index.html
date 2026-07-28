@@ -209,8 +209,12 @@
   .type-pill.rest{background:transparent; color:var(--muted); border-color:var(--line);}
   .type-pill.done{background:var(--text); color:#0a0a0a; border-color:var(--text);}
 
-  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; margin:10px 0 4px; font-variant-numeric:tabular-nums;
-    transition:color .2s;}
+  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; font-variant-numeric:tabular-nums;
+    transition:color .2s, opacity .2s; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;}
+  .timer.paused{opacity:0.35;}
+  .timer-row{display:flex; align-items:center; justify-content:center; gap:14px; margin:10px 0 4px;}
+  .time-adj{display:flex; gap:10px; justify-content:center; margin-bottom:6px;}
+  .arrow-btn{font-size:26px; padding:14px 18px; min-width:56px; line-height:1;}
   .timer.work{color:var(--work);}
   .timer.rest{color:var(--rest);}
   .timer.warn{color:var(--danger); }
@@ -389,7 +393,15 @@
       <div id="runActive" class="runner hidden">
         <div class="progress-line" id="progressLine">Block 1 of 1 · Round 1 of 1</div>
         <div class="type-pill work" id="typePill">WORK</div>
-        <div class="timer work" id="timerDisplay">0:00</div>
+        <div class="timer-row">
+          <button class="ctl-btn arrow-btn" onclick="skip(-1)" title="Back">◀</button>
+          <div class="timer work" id="timerDisplay" onclick="togglePause()" title="Tap to pause / resume">0:00</div>
+          <button class="ctl-btn arrow-btn" onclick="skip(1)" title="Skip">▶</button>
+        </div>
+        <div class="time-adj">
+          <button class="ctl-btn" onclick="addTime(-10)">-10s</button>
+          <button class="ctl-btn" onclick="addTime(15)">+15s</button>
+        </div>
 
         <div class="now-playing">
           <div class="now-playing-label">Now Playing</div>
@@ -404,18 +416,6 @@
         <select class="jump-select" id="jumpSelect" onchange="onJumpSelect(this.value)">
           <option value="">Jump to block…</option>
         </select>
-
-        <div class="controls">
-          <button class="ctl-btn" onclick="skip(-1)">⏮ Back</button>
-          <button class="ctl-btn play" id="playPauseBtn" onclick="togglePause()">⏸ Pause</button>
-          <button class="ctl-btn" onclick="skip(1)">Skip ⏭</button>
-        </div>
-        <div class="controls">
-          <button class="ctl-btn" onclick="addTime(15)">+15s</button>
-          <button class="ctl-btn" onclick="addTime(-10)">-10s</button>
-          <button class="ctl-btn" onclick="restartRun()">⟲ Restart</button>
-          <button class="ctl-btn" onclick="endRun()">■ End</button>
-        </div>
       </div>
     </div>
 
@@ -1511,7 +1511,7 @@ function startRun(){
   buzzGo();
   renderRunFrame();
   tickHandle = setInterval(tick, 1000);
-  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  updatePauseVisual();
 }
 
 function populateJumpSelect(){
@@ -1553,7 +1553,7 @@ function restartRun(){
   buzzGo();
   renderRunFrame();
   tickHandle = setInterval(tick, 1000);
-  document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+  updatePauseVisual();
 }
 
 function currentStep(){ return sequence[seqIndex]; }
@@ -1669,14 +1669,14 @@ function finishRun(){
   document.getElementById('timerDisplay').textContent = '0:00';
   const playlistScroll = document.getElementById('playlistScroll');
   if(playlistScroll) playlistScroll.innerHTML = '<p class="muted-note" style="padding:8px 6px;">Class complete — nothing queued up.</p>';
-  document.getElementById('playPauseBtn').textContent = '▶ Restart';
+  updatePauseVisual();
   releaseWake();
 }
 
 function togglePause(){
   if(seqIndex >= sequence.length){ startRun(); return; }
   running = !running;
-  document.getElementById('playPauseBtn').textContent = running ? '⏸ Pause' : '▶ Resume';
+  updatePauseVisual();
   if(running){ ensureAudio(); }
 }
 
@@ -1692,6 +1692,11 @@ function skip(dir){
 function addTime(sec){
   remaining = Math.max(0, remaining + sec);
   renderRunFrame();
+}
+
+function updatePauseVisual(){
+  const timerEl = document.getElementById('timerDisplay');
+  if(timerEl) timerEl.classList.toggle('paused', !running);
 }
 
 function stopRun(){
