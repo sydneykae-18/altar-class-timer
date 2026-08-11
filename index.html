@@ -267,6 +267,11 @@
   .setup-screen{display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px 20px; text-align:center;}
   .setup-screen h2{margin:0; font-size:26px; font-family:var(--serif); font-weight:400;}
   .setup-screen p{color:var(--muted); font-size:14px; max-width:360px; margin:0;}
+  .sound-settings-panel{width:100%; max-width:360px; display:flex; flex-direction:column; gap:12px;
+    margin-top:18px; padding-top:18px; border-top:1px solid var(--line);}
+  .sound-setting-row{display:flex; align-items:center; gap:12px;}
+  .sound-setting-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; flex:0 0 52px; text-align:right;}
+  .vol-quick-row{display:flex; align-items:center; justify-content:center; gap:0; margin-top:10px;}
   .tagline{font-family:var(--serif); font-style:italic; color:var(--muted); font-size:15px; max-width:320px; margin:0; line-height:1.4;}
 
   footer.hint{color:var(--muted); font-size:11px; text-align:center; padding:10px 20px 26px; letter-spacing:.01em;}
@@ -388,6 +393,16 @@
         <p class="tagline">Come as you are, we will meet you there.</p>
         <p id="runSummary">Build your class in the Build tab, then tap Start. Keep your volume up — the timer beeps and buzzes through your speakers.</p>
         <button class="btn primary" style="padding:16px 36px; font-size:15px;" onclick="startRun()">▶ Start Class</button>
+        <div class="sound-settings-panel">
+          <div class="sound-setting-row">
+            <span class="sound-setting-label">Sound</span>
+            <div class="format-toggle" id="soundProfileToggle"></div>
+          </div>
+          <div class="sound-setting-row">
+            <span class="sound-setting-label">Volume</span>
+            <div class="format-toggle" id="volumeToggle"></div>
+          </div>
+        </div>
       </div>
 
       <div id="runActive" class="runner hidden">
@@ -416,6 +431,7 @@
         <select class="jump-select" id="jumpSelect" onchange="onJumpSelect(this.value)">
           <option value="">Jump to block…</option>
         </select>
+        <div class="format-toggle vol-quick-row" id="volQuickRow"></div>
       </div>
     </div>
 
@@ -1114,7 +1130,7 @@ function showScreen(which){
   document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
   document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
   document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
-  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); }
+  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); renderSoundSettings(); }
   if(which==='library'){ refreshLibrary(); }
 }
 
@@ -1344,6 +1360,109 @@ function renderDeletionLog(log){
 }
 
 /* ---------------------------------------------------------
+   SOUND PROFILES & VOLUME
+   buzzerVolume is a 0–1 multiplier applied inside tone() — it
+   scales the app's own audio output and is fully independent of
+   the phone's system volume / whatever music is playing elsewhere.
+   Selecting a profile or tapping a volume level plays a preview
+   so you can dial it in before class starts.
+--------------------------------------------------------- */
+const SOUND_PROFILE_KEY = 'altarSoundProfile';
+const BUZZER_VOL_KEY    = 'altarBuzzerVol';
+
+let currentSoundProfile = 'classic';
+let currentVolLevel     = 'high';
+let buzzerVolume        = 1.0;  // set by loadSoundSettings()
+
+const SOUND_PROFILES = {
+  classic: {
+    label: 'Classic',
+    countdown(){ tone(880, 0.12, 0.3); },
+    go(){ tone(660, 0.14, 0.4, 0); tone(990, 0.22, 0.4, 0.15); },
+    rest(){ tone(440, 0.25, 0.35, 0); },
+    end(){ tone(330, 0.35, 0.4, 0); tone(220, 0.5, 0.4, 0.25); },
+  },
+  bell: {
+    label: 'Bell',
+    countdown(){ tone(1047, 0.5, 0.2); },
+    go(){ tone(784, 0.3, 0.25, 0); tone(1047, 0.5, 0.25, 0.2); },
+    rest(){ tone(659, 0.5, 0.2, 0); },
+    end(){ tone(523, 0.5, 0.25, 0); tone(392, 0.7, 0.25, 0.3); },
+  },
+  beep: {
+    label: 'Beep',
+    countdown(){ tone(1000, 0.08, 0.35); },
+    go(){ tone(1200, 0.1, 0.4, 0); tone(1200, 0.1, 0.4, 0.18); },
+    rest(){ tone(600, 0.15, 0.3, 0); },
+    end(){ tone(1200, 0.1, 0.4, 0); tone(1000, 0.1, 0.4, 0.18); tone(800, 0.2, 0.4, 0.36); },
+  },
+  off: {
+    label: 'Off',
+    countdown(){}, go(){}, rest(){}, end(){},
+  },
+};
+
+const VOLUME_LEVELS = [
+  { key: 'mute', label: '✕',    value: 0    },
+  { key: 'low',  label: 'Low',  value: 0.3  },
+  { key: 'med',  label: 'Med',  value: 0.65 },
+  { key: 'high', label: 'High', value: 1.0  },
+];
+
+function loadSoundSettings(){
+  try{
+    const p = localStorage.getItem(SOUND_PROFILE_KEY);
+    if(SOUND_PROFILES[p]) currentSoundProfile = p;
+    const v = localStorage.getItem(BUZZER_VOL_KEY);
+    const found = VOLUME_LEVELS.find(l => l.key === v);
+    if(found){ currentVolLevel = v; buzzerVolume = found.value; }
+  }catch(e){}
+}
+function saveSoundSettings(){
+  try{
+    localStorage.setItem(SOUND_PROFILE_KEY, currentSoundProfile);
+    localStorage.setItem(BUZZER_VOL_KEY, currentVolLevel);
+  }catch(e){}
+}
+function pickSoundProfile(key){
+  if(!SOUND_PROFILES[key]) return;
+  currentSoundProfile = key;
+  saveSoundSettings();
+  renderSoundSettings();
+  ensureAudio();
+  SOUND_PROFILES[key].go(); // preview
+}
+function pickVolumeLevel(key){
+  const found = VOLUME_LEVELS.find(l => l.key === key);
+  if(!found) return;
+  currentVolLevel = key;
+  buzzerVolume = found.value;
+  saveSoundSettings();
+  renderSoundSettings();
+  if(buzzerVolume > 0){ ensureAudio(); SOUND_PROFILES[currentSoundProfile].countdown(); } // preview
+}
+function renderSoundSettings(){
+  const profileWrap = document.getElementById('soundProfileToggle');
+  if(profileWrap){
+    profileWrap.innerHTML = Object.entries(SOUND_PROFILES).map(([key, p]) =>
+      `<button type="button" class="format-btn ${currentSoundProfile===key?'active':''}" onclick="pickSoundProfile('${key}')">${p.label}</button>`
+    ).join('');
+  }
+  const volWrap = document.getElementById('volumeToggle');
+  if(volWrap){
+    volWrap.innerHTML = VOLUME_LEVELS.map(l =>
+      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
+    ).join('');
+  }
+  const volQuick = document.getElementById('volQuickRow');
+  if(volQuick){
+    volQuick.innerHTML = VOLUME_LEVELS.map(l =>
+      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
+    ).join('');
+  }
+}
+
+/* ---------------------------------------------------------
    RUNNER
 --------------------------------------------------------- */
 let sequence = [];   // flattened list of {blockName, blockIndex, roundIndex, roundsTotal, label, type, seconds}
@@ -1470,22 +1589,22 @@ function ensureAudio(){
   if(audioCtx.state === 'suspended') audioCtx.resume();
 }
 function tone(freq, duration, vol, delay){
-  if(!audioCtx) return;
+  if(!audioCtx || buzzerVolume === 0) return;
   const t0 = audioCtx.currentTime + (delay||0);
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
   osc.frequency.value = freq;
   gain.gain.setValueAtTime(0, t0);
-  gain.gain.linearRampToValueAtTime(vol||0.35, t0 + 0.02);
+  gain.gain.linearRampToValueAtTime((vol||0.35) * buzzerVolume, t0 + 0.02);
   gain.gain.linearRampToValueAtTime(0, t0 + duration);
   osc.connect(gain); gain.connect(audioCtx.destination);
   osc.start(t0); osc.stop(t0 + duration + 0.02);
 }
-function beepCountdown(){ tone(880, 0.12, 0.3); }
-function buzzGo(){ tone(660, 0.14, 0.4, 0); tone(990, 0.22, 0.4, 0.15); }
-function buzzRest(){ tone(440, 0.25, 0.35, 0); }
-function buzzEnd(){ tone(330, 0.35, 0.4, 0); tone(220, 0.5, 0.4, 0.25); }
+function beepCountdown(){ if(audioCtx) SOUND_PROFILES[currentSoundProfile].countdown(); }
+function buzzGo(){        if(audioCtx) SOUND_PROFILES[currentSoundProfile].go(); }
+function buzzRest(){      if(audioCtx) SOUND_PROFILES[currentSoundProfile].rest(); }
+function buzzEnd(){       if(audioCtx) SOUND_PROFILES[currentSoundProfile].end(); }
 
 async function requestWake(){
   try{
@@ -1716,6 +1835,7 @@ function endRun(){
    INIT
 --------------------------------------------------------- */
 (async function init(){
+  loadSoundSettings();
   populateStaticOptions();
   const whoamiInput = document.getElementById('whoamiInput');
   // Normalize a legacy full-name "You are" value to the short form once, so
