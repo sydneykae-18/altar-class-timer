@@ -452,8 +452,26 @@
   <div class="whoami-bar">
     <span class="whoami-label">You are:</span>
     <span class="whoami-name" id="whoamiName">—</span>
+    <button class="whoami-switch" onclick="openProfileModal()">Profile</button>
     <button class="whoami-switch" onclick="showLoginOverlay()">Switch</button>
     <span class="whoami-hint">Tracks who created each class and controls delete permissions.</span>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div id="profileModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileModal()">
+    <div class="modal-box">
+      <h3 id="profileModalName" style="font-family:var(--serif); font-weight:400;"></h3>
+      <p style="font-size:13px; color:var(--muted); margin:0;">Change your PIN</p>
+      <input type="password" id="profileCurrentPin" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off">
+      <input type="password" id="profileNewPin"     inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off">
+      <input type="password" id="profileConfirmPin" inputmode="numeric" maxlength="4" placeholder="Confirm new PIN" autocomplete="off"
+        onkeydown="if(event.key==='Enter') saveProfilePin()">
+      <div class="modal-err" id="profilePinErr"></div>
+      <div class="modal-btns">
+        <button class="btn primary" style="flex:1" onclick="saveProfilePin()">Save PIN</button>
+        <button class="btn ghost" onclick="closeProfileModal()">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <main>
@@ -958,6 +976,44 @@ async function renderAdminDeletionLog(){
   }catch(e){
     el.innerHTML = '<em style="color:var(--muted);font-size:14px;">Could not load deletion log.</em>';
   }
+}
+
+/* ---------------------------------------------------------
+   PROFILE MODAL — user changes their own PIN
+--------------------------------------------------------- */
+function openProfileModal(){
+  const user = getCurrentUser();
+  if(!user){ alert('Log in first to manage your profile.'); return; }
+  document.getElementById('profileModalName').textContent = user;
+  document.getElementById('profileCurrentPin').value = '';
+  document.getElementById('profileNewPin').value = '';
+  document.getElementById('profileConfirmPin').value = '';
+  document.getElementById('profilePinErr').textContent = '';
+  document.getElementById('profileModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('profileCurrentPin').focus(), 100);
+}
+function closeProfileModal(){
+  document.getElementById('profileModal').classList.add('hidden');
+}
+function saveProfilePin(){
+  const user    = getCurrentUser();
+  const current = document.getElementById('profileCurrentPin').value.trim();
+  const newPin  = document.getElementById('profileNewPin').value.trim();
+  const confirm = document.getElementById('profileConfirmPin').value.trim();
+  const errEl   = document.getElementById('profilePinErr');
+
+  if(current !== getPinFor(user)){
+    errEl.textContent = 'Current PIN is incorrect.'; return;
+  }
+  if(!/^\d{4}$/.test(newPin)){
+    errEl.textContent = 'New PIN must be exactly 4 digits.'; return;
+  }
+  if(newPin !== confirm){
+    errEl.textContent = 'PINs don\'t match.'; return;
+  }
+  setPinFor(user, newPin);
+  closeProfileModal();
+  alert('PIN updated!');
 }
 
 function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
