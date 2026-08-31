@@ -132,6 +132,32 @@
   .title-row-actions{display:flex; gap:8px; flex:0 0 auto;}
   .save-status-row{min-height:16px; margin-bottom:12px;}
 
+  /* Read-only editor state */
+  .readonly-banner{background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .readonly-banner p{margin:0; font-size:13px; color:var(--muted); flex:1 1 200px;}
+  .readonly-banner strong{color:var(--text);}
+  #screenEditor.editor-readonly .workout-name,
+  #screenEditor.editor-readonly .meta-field input,
+  #screenEditor.editor-readonly .meta-field textarea,
+  #screenEditor.editor-readonly .meta-field select,
+  #screenEditor.editor-readonly #classMessage,
+  #screenEditor.editor-readonly .block-head input,
+  #screenEditor.editor-readonly .block-head select,
+  #screenEditor.editor-readonly .step input,
+  #screenEditor.editor-readonly .combo-display,
+  #screenEditor.editor-readonly .format-btn,
+  #screenEditor.editor-readonly .add-step-btn,
+  #screenEditor.editor-readonly .remove-block,
+  #screenEditor.editor-readonly .remove-step,
+  #screenEditor.editor-readonly .block-drag-handle,
+  #screenEditor.editor-readonly .step-drag-handle,
+  #screenEditor.editor-readonly #toolbarTop button,
+  #screenEditor.editor-readonly #toolbarBottom button,
+  #screenEditor.editor-readonly input[id="targetMinutes"]
+  { pointer-events:none; opacity:0.45; }
+  #screenEditor.editor-readonly .btn.good{ pointer-events:none; opacity:0.35; }
+
   .block{background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; margin-bottom:14px; transition:box-shadow .15s;}
   .block-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
   .block-name{flex:1; background:var(--panel2); border:1px solid var(--line); color:var(--text);
@@ -418,6 +444,10 @@
   <main>
     <!-- EDITOR -->
     <div id="screenEditor">
+      <div id="readonlyBanner" class="readonly-banner hidden">
+        <p><strong id="readonlyOwnerName"></strong> built this class. Duplicate it to make your own editable copy.</p>
+        <button class="btn small" onclick="duplicateCurrentWorkout()">Duplicate to Edit</button>
+      </div>
       <div class="title-row">
         <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
         <div class="title-row-actions">
@@ -709,6 +739,7 @@ function setCurrentUser(name){
   const el = document.getElementById('whoamiName');
   if(el) el.textContent = name || '—';
   renderLibrary();
+  applyEditorPermissions();
 }
 
 // PIN storage — object {name: '1234', ...}; default 0000 if missing
@@ -1141,6 +1172,36 @@ function load(){
 }
 
 /* ---------------------------------------------------------
+   EDIT PERMISSIONS
+--------------------------------------------------------- */
+function canEditWorkout(){
+  if(!workout) return true;
+  if(!workout.createdBy) return true;
+  const user = getCurrentUser();
+  return workout.createdBy === user || shortInstructorName(workout.createdBy) === user;
+}
+function applyEditorPermissions(){
+  const screen = document.getElementById('screenEditor');
+  const banner = document.getElementById('readonlyBanner');
+  const ownerEl = document.getElementById('readonlyOwnerName');
+  if(!screen || !banner) return;
+  const editable = canEditWorkout();
+  screen.classList.toggle('editor-readonly', !editable);
+  banner.classList.toggle('hidden', editable);
+  if(!editable && ownerEl) ownerEl.textContent = workout.createdBy || 'Another instructor';
+}
+function duplicateCurrentWorkout(){
+  if(!workout) return;
+  const copy = JSON.parse(JSON.stringify(workout));
+  copy.id = uid();
+  copy.name = (copy.name || 'Untitled class') + ' (copy)';
+  copy.createdBy = '';
+  workout = ensureIds(copy);
+  save();
+  renderEditor();
+}
+
+/* ---------------------------------------------------------
    EDITOR RENDER
 --------------------------------------------------------- */
 function renderEditor(){
@@ -1254,6 +1315,7 @@ function renderEditor(){
     });
   });
   updateTotalBar();
+  applyEditorPermissions();
 }
 
 /* ---------------------------------------------------------
@@ -1561,6 +1623,11 @@ function showScreen(which){
    device opening this same site sees the same saved classes)
 --------------------------------------------------------- */
 async function saveClass(){
+  if(!canEditWorkout()){
+    const statusEl = document.getElementById('saveStatus');
+    if(statusEl) statusEl.textContent = 'This class belongs to ' + (workout.createdBy || 'another instructor') + '. Duplicate it to save your own version.';
+    return;
+  }
   const statusEl = document.getElementById('saveStatus');
   if(!isValidMDY(workout.date)){
     if(statusEl) statusEl.textContent = 'Fix the date (MM/DD/YYYY) before saving.';
