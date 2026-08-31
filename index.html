@@ -299,14 +299,29 @@
   .now-playing-label{font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;}
   .now-playing-title{font-size:24px; font-weight:400; font-family:var(--serif); line-height:1.25; margin-top:4px;}
 
-  .message-drawer{width:100%; max-width:420px; margin:0 auto 14px;}
-  .message-drawer-toggle{width:100%; display:flex; justify-content:space-between; align-items:center;
-    background:var(--panel); border:1px solid var(--line); color:var(--text); padding:12px 16px;
-    border-radius:14px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans);}
-  .message-drawer-content{background:var(--panel); border:1px solid var(--line); border-top:none;
-    border-radius:0 0 14px 14px; margin-top:-1px; padding:14px 16px; text-align:left; font-size:14px;
-    line-height:1.5; max-height:240px; overflow-y:auto;}
-  .message-drawer-content ul{margin:4px 0; padding-left:22px;}
+  /* Message modal (replaces drawer) */
+  .msg-modal-btn{width:100%; max-width:420px; margin:0 auto 14px; display:flex; justify-content:center;}
+  .msg-modal-btn button{background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:12px 28px; border-radius:14px; font-size:13px; font-weight:600; cursor:pointer;
+    font-family:var(--sans); display:flex; align-items:center; gap:8px; -webkit-tap-highlight-color:transparent;}
+  .msg-modal-btn button:active{background:var(--panel2);}
+  .msg-modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:800;
+    display:flex; align-items:flex-end; justify-content:center; padding:0;}
+  .msg-modal-sheet{background:var(--bg); border-radius:24px 24px 0 0; width:100%; max-width:540px;
+    max-height:82vh; display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 -4px 32px rgba(0,0,0,.4);}
+  .msg-modal-header{display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px 14px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .msg-modal-header h3{font-family:var(--serif); font-size:20px; font-weight:400; margin:0;}
+  .msg-modal-close{font-size:22px; color:var(--muted); background:none; border:none; cursor:pointer;
+    padding:4px 8px; line-height:1; border-radius:8px;}
+  .msg-modal-close:active{background:var(--panel);}
+  .msg-modal-body{padding:18px 20px 32px; overflow-y:auto; font-size:15px; line-height:1.7;
+    color:var(--text); flex:1;}
+  .msg-modal-body ul{margin:6px 0; padding-left:22px;}
+  .msg-modal-body li{margin-bottom:4px;}
+  .msg-modal-body b, .msg-modal-body strong{color:var(--accent);}
+  .muted-note{color:var(--muted); font-style:italic;}
 
   .playlist-wrap{width:100%; max-width:420px; margin:14px auto 0; background:var(--panel);
     border:1px solid var(--line); border-radius:16px; padding:10px; text-align:left;}
@@ -518,12 +533,19 @@
 
     <!-- RUNNER -->
     <div id="screenRun" class="hidden">
-      <div class="message-drawer">
-        <button type="button" class="message-drawer-toggle" onclick="toggleMessageDrawer()">
-          <span>Message / Inspo</span>
-          <span id="messageDrawerChevron">▾</span>
-        </button>
-        <div id="messageDrawerContent" class="message-drawer-content hidden"></div>
+      <div class="msg-modal-btn">
+        <button type="button" onclick="openMessageModal()">📋 Message &amp; Phrases</button>
+      </div>
+
+      <!-- Message modal — rendered as bottom sheet, timer keeps running -->
+      <div id="messageModal" class="msg-modal-overlay hidden" onclick="onMessageModalBackdropClick(event)">
+        <div class="msg-modal-sheet">
+          <div class="msg-modal-header">
+            <h3>Message &amp; Phrases</h3>
+            <button class="msg-modal-close" onclick="closeMessageModal()">✕</button>
+          </div>
+          <div class="msg-modal-body" id="messageModalBody"></div>
+        </div>
       </div>
 
       <div id="runSubModeToggle" class="format-toggle run-submode-toggle hidden">
@@ -2185,25 +2207,27 @@ function renderRunFrame(){
 }
 
 /* ---------------------------------------------------------
-   MESSAGE / INSPO DRAWER (Run Class page)
+   MESSAGE / INSPO MODAL (Run Class page)
+   Timer keeps running — setInterval is unaffected by UI overlays.
 --------------------------------------------------------- */
-let messageDrawerOpen = false;
-function toggleMessageDrawer(){
-  messageDrawerOpen = !messageDrawerOpen;
-  renderMessageDrawer();
+function openMessageModal(){
+  const modal = document.getElementById('messageModal');
+  const body  = document.getElementById('messageModalBody');
+  if(!modal || !body) return;
+  body.innerHTML = (workout && workout.message && workout.message.trim())
+    ? workout.message
+    : '<p class="muted-note">No message added for this class.</p>';
+  modal.classList.remove('hidden');
 }
-function renderMessageDrawer(){
-  const content = document.getElementById('messageDrawerContent');
-  const chevron = document.getElementById('messageDrawerChevron');
-  if(!content) return;
-  content.classList.toggle('hidden', !messageDrawerOpen);
-  if(chevron) chevron.textContent = messageDrawerOpen ? '▴' : '▾';
-  if(messageDrawerOpen){
-    content.innerHTML = (workout.message && workout.message.trim())
-      ? workout.message
-      : '<p class="muted-note">No message added for this class.</p>';
-  }
+function closeMessageModal(){
+  const modal = document.getElementById('messageModal');
+  if(modal) modal.classList.add('hidden');
 }
+function onMessageModalBackdropClick(e){
+  if(e.target === document.getElementById('messageModal')) closeMessageModal();
+}
+// No-op kept so any remaining showScreen call to renderMessageDrawer doesn't throw
+function renderMessageDrawer(){}
 
 /* ---------------------------------------------------------
    PLAYLIST — active movement + scrolling upcoming queue.
