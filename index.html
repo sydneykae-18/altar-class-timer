@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Altar Class Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --panel:#151515;
+    --panel2:#1c1c1c;
+    --line:#2c2c2c;
+    --text:#fafafa;
+    --muted:#8f8f8f;
+    --work:#fafafa;
+    --rest:#8f8f8f;
+    --accent:#fafafa;
+    --good:#fafafa;
+    --danger:#e8b4a0;
+    --serif:"Gloock", Georgia, "Times New Roman", serif;
+    --sans:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);
+    -webkit-tap-highlight-color:transparent; overscroll-behavior:none; height:100%;}
+  /* iOS auto-zooms the page when a focused input's font-size is under 16px — force 16px minimum
+     on every focusable text field/select so tapping into any of them never triggers that zoom. */
+  input, select, textarea{ font-size:16px; }
+  #app{min-height:100%; display:flex; flex-direction:column;}
+  header{display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:16px 18px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5;}
+  header h1{font-size:22px; margin:0; letter-spacing:.04em; font-family:var(--serif); font-weight:400; flex:0 0 auto;}
+  header h1 span{color:var(--muted); font-family:var(--sans); font-size:11px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; margin-left:8px; vertical-align:middle;}
+  .tabs{display:flex; gap:6px; flex:0 0 auto; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .tab{background:transparent; border:1px solid var(--line); color:var(--muted);
+    padding:8px 16px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.04em; cursor:pointer;
+    white-space:nowrap; min-height:36px; display:flex; align-items:center;}
+  .tab.active{color:#0a0a0a; background:var(--accent); border-color:var(--accent);}
+  main{flex:1; padding:16px; padding-bottom:40px; max-width:720px; margin:0 auto; width:100%;}
+  .hidden{display:none !important;}
+
+  .whoami-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px;
+    border-bottom:1px solid var(--line); max-width:720px; margin:0 auto; width:100%; box-sizing:border-box;}
+  .whoami-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; flex:0 0 auto;}
+  .whoami-bar input{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:7px 12px; border-radius:999px; font-size:16px; min-width:180px; flex:0 1 220px;}
+  .whoami-hint{font-size:11px; color:var(--muted); flex:1 1 200px;}
+  @media (max-width:480px){ .whoami-hint{display:none;} }
+
+  @media (max-width:400px){
+    header{padding:12px 14px;}
+    header h1{font-size:18px;}
+    header h1 span{display:none;}
+    .tab{padding:6px 11px; font-size:10.5px; min-height:32px;}
+  }
+  @media (max-width:360px){
+    .tab{padding:6px 9px; font-size:10px;}
+  }
+
+  /* ---- Editor ---- */
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .btn{background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:.01em;}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#0a0a0a;}
+  .btn.good{background:var(--text); border-color:var(--text); color:#0a0a0a;}
+  .btn.ghost{background:transparent;}
+  .btn.small{padding:8px 14px; font-size:11px; border-radius:999px; min-height:34px;}
+  .btn.danger{color:var(--danger); border-color:#4a3a34;}
+  .btn.icon-btn{width:26px; height:26px; padding:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; line-height:1; position:relative;}
+  .btn.icon-btn::after{content:''; position:absolute; inset:-7px;}
+
+  .title-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:4px;}
+  .workout-name{flex:1 1 220px; min-width:0; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
+    color:var(--text); border-bottom:1px dashed var(--line); padding:8px 2px;}
+  .workout-name:focus{outline:none; border-bottom-color:var(--accent);}
+  .workout-name::placeholder{font-size:15px; font-family:var(--sans); color:var(--muted);}
+  .title-row-actions{display:flex; gap:8px; flex:0 0 auto;}
+  .save-status-row{min-height:16px; margin-bottom:12px;}
+
+  .block{background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; margin-bottom:14px; transition:box-shadow .15s;}
+  .block-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .block-name{flex:1; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 12px; border-radius:12px; font-size:15px; font-weight:600; font-family:var(--serif);}
+  .rounds-wrap{display:flex; align-items:center; gap:6px; white-space:nowrap; font-size:11px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase;}
+  .rounds-input{width:52px; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:8px 4px; border-radius:10px; text-align:center; font-size:16px;}
+
+  .drag-handle{cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;
+    color:var(--muted); font-size:20px; padding:10px 8px; flex:0 0 auto; line-height:1; position:relative;}
+  .drag-handle::after{content:''; position:absolute; inset:-6px;}
+  .drag-handle:active{cursor:grabbing;}
+  .step-handle{cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;
+    color:var(--muted); font-size:16px; text-align:center; line-height:1; padding:12px 0;
+    align-self:stretch; display:flex; align-items:center; justify-content:center; position:relative;}
+  .step-handle::after{content:''; position:absolute; inset:-3px -8px;}
+  .step-handle:active{cursor:grabbing;}
+  .dragging{opacity:.45; box-shadow:0 6px 18px rgba(0,0,0,.4);}
+
+  .step-row{display:grid; grid-template-columns:26px minmax(0,1fr) 46px 58px 58px 26px; gap:5px; align-items:center; margin-bottom:8px;}
+  .step-row input[type="text"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:8px 6px; border-radius:8px; width:100%; min-width:0;}
+  .step-row input[type="number"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:8px 2px; border-radius:8px; width:100%; text-align:center; min-width:0;}
+  .lbl{font-size:9px; color:var(--muted); text-align:center; margin-bottom:2px; display:block;
+    white-space:nowrap; letter-spacing:0; overflow:hidden;}
+  .col-head{display:grid; grid-template-columns:26px minmax(0,1fr) 46px 58px 58px 26px; gap:5px; margin-bottom:2px;}
+
+  .step-row.music-cols, .col-head.music-cols{grid-template-columns:26px 56px minmax(0,1fr) minmax(0,1fr) 26px;}
+
+  .format-toggle{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; flex:0 0 auto;}
+  .format-btn{background:transparent; border:none; color:var(--muted); padding:8px 14px; font-size:11px;
+    font-weight:700; letter-spacing:.04em; cursor:pointer;}
+  .format-btn.active{background:var(--accent); color:#0a0a0a;}
+
+  @media (max-width:400px){
+    main{padding:12px;}
+    .block{padding:12px;}
+    .step-row, .col-head{grid-template-columns:20px minmax(0,1fr) 36px 44px 44px 20px; gap:4px;}
+    .step-row.music-cols, .col-head.music-cols{grid-template-columns:20px 46px minmax(0,1fr) minmax(0,1fr) 20px;}
+    .step-row input[type="number"]{padding:8px 1px;}
+    .step-row .btn.icon-btn{width:20px; height:20px; font-size:11px;}
+    .lbl{font-size:8px;}
+    .format-btn{padding:6px 10px; font-size:10px;}
+  }
+
+  .block-footer{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .block-time{font-size:12px; color:var(--muted);}
+
+  .import-box{width:100%; min-height:120px; background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); border-radius:10px; padding:10px; font-family:monospace; font-size:16px; margin-top:8px;}
+
+  .rte-toolbar{display:flex; gap:6px; margin-top:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .rte-editor{width:100%; height:160px; background:var(--panel2); border:1px solid var(--line);
+    color:var(--text); border-radius:10px; padding:10px 12px; font-size:16px; line-height:1.5;
+    font-family:var(--sans); overflow-wrap:break-word; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .rte-editor:focus{outline:none; border-color:var(--accent);}
+  .rte-editor:empty::before{content:attr(data-placeholder); color:var(--muted);}
+  .rte-editor ul{margin:4px 0; padding-left:22px;}
+  .rte-editor ul ul{margin:2px 0;}
+  .rte-editor li{margin:2px 0;}
+
+  .target-row{display:flex; align-items:center; gap:8px; margin-bottom:16px;}
+  .target-row label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
+  .target-row span.unit{font-size:12px; color:var(--muted);}
+
+  .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .meta-field{flex:1; min-width:130px;}
+  .meta-field label{display:block; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;}
+  .meta-field input, .meta-field select{width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 10px; border-radius:10px; font-size:16px;}
+  .field-hint{display:block; font-size:11px; color:var(--danger); margin-top:4px; min-height:14px;}
+
+  .lib-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
+  .lib-filters select, .lib-filters input[type="text"]{background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 12px; border-radius:10px; font-size:16px; flex:1; min-width:140px;}
+  .lib-filters .btn{flex:0 0 auto;}
+  .lib-filters .combo{flex:1; min-width:140px;}
+
+  /* ---- Class type combo (descriptor while choosing, short title once picked) ---- */
+  .combo{position:relative;}
+  .combo-display{width:100%; text-align:left; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    padding:9px 10px; border-radius:10px; font-size:16px; cursor:pointer; font-family:var(--sans);}
+  .combo-menu{position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:6px; z-index:20; max-height:240px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .combo-option{display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--text);
+    padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer; font-family:var(--sans);}
+  .combo-option:active{background:var(--panel2);}
+  .combo-option.active{background:var(--accent); color:#0a0a0a;}
+
+  .save-status{font-size:12px; color:var(--muted); align-self:center;}
+  .lib-status{font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .muted-note{color:var(--muted); font-size:14px;}
+
+  .class-card{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:14px 16px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .class-card-date{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
+  .class-card-name{font-family:var(--serif); font-size:17px; margin:2px 0;}
+  .class-card-meta{font-size:12px; color:var(--muted);}
+  .class-card-desc{font-size:13px; color:var(--text); margin-top:6px; max-width:420px; line-height:1.4;}
+  .class-card-actions{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .owner-note{font-size:11px; color:var(--muted); font-style:italic;}
+
+  .log-panel-title{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;}
+  .log-row{border-bottom:1px solid var(--line); padding:8px 0;}
+  .log-row:last-child{border-bottom:none;}
+  .log-row-main{display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;}
+  .log-row-meta{font-size:12px; color:var(--muted); margin-top:2px;}
+  #deletionLogPanel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:14px;}
+
+  .total-bar{position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
+    padding:10px 16px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted);}
+  .total-bar b{color:var(--text); font-size:16px;}
+  .total-bar.over #totalTime{color:var(--danger);}
+  .total-bar.over #totalTarget{color:var(--danger);}
+
+  /* ---- Runner ---- */
+  .runner{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding-top:6px;}
+  .progress-line{font-size:12px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase;}
+  .type-pill{display:inline-block; padding:10px 28px; border-radius:999px; font-weight:700; font-size:12px;
+    letter-spacing:.14em; text-transform:uppercase; margin-top:6px; border:1px solid var(--line);
+    cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;}
+  .type-pill:active{transform:scale(.96);}
+  .type-pill.work{background:var(--text); color:#0a0a0a; border-color:var(--text);}
+  .type-pill.rest{background:transparent; color:var(--muted); border-color:var(--line);}
+  .type-pill.done{background:var(--text); color:#0a0a0a; border-color:var(--text);}
+
+  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; font-variant-numeric:tabular-nums;
+    transition:color .2s, opacity .2s; user-select:none;}
+  .timer.paused{opacity:0.35;}
+  .timer-row{display:flex; align-items:center; justify-content:center; gap:14px; margin:10px 0 4px;}
+  .time-adj{display:flex; gap:10px; justify-content:center; margin-bottom:6px;}
+  .arrow-btn{font-size:26px; padding:14px 18px; min-width:56px; line-height:1;}
+  .timer.work{color:var(--work);}
+  .timer.rest{color:var(--rest);}
+  .timer.warn{color:var(--danger); }
+
+  .now-playing{margin-top:8px; text-align:center;}
+  .now-playing-label{font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;}
+  .now-playing-title{font-size:24px; font-weight:400; font-family:var(--serif); line-height:1.25; margin-top:4px;}
+
+  .message-drawer{width:100%; max-width:420px; margin:0 auto 14px;}
+  .message-drawer-toggle{width:100%; display:flex; justify-content:space-between; align-items:center;
+    background:var(--panel); border:1px solid var(--line); color:var(--text); padding:12px 16px;
+    border-radius:14px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans);}
+  .message-drawer-content{background:var(--panel); border:1px solid var(--line); border-top:none;
+    border-radius:0 0 14px 14px; margin-top:-1px; padding:14px 16px; text-align:left; font-size:14px;
+    line-height:1.5; max-height:240px; overflow-y:auto;}
+  .message-drawer-content ul{margin:4px 0; padding-left:22px;}
+
+  .playlist-wrap{width:100%; max-width:420px; margin:14px auto 0; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px; padding:10px; text-align:left;}
+  .playlist-label{font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; padding:2px 6px 8px;}
+  .playlist-scroll{max-height:220px; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .playlist-row{display:flex; flex-direction:column; gap:1px; padding:10px 12px; border-radius:10px; cursor:pointer;}
+  .playlist-row:active{background:var(--panel2);}
+  .playlist-row-label{font-family:var(--serif); font-size:15px;}
+  .playlist-row-meta{font-size:11px; color:var(--muted); letter-spacing:.02em;}
+  .playlist-row.upcoming{opacity:.65;}
+
+  .run-submode-toggle{width:fit-content; margin:0 auto 14px;}
+  .run-submode-toggle .format-btn{padding:10px 24px; font-size:12px;}
+
+  .song-block{width:100%; max-width:420px; margin:0 auto 14px; background:var(--panel);
+    border:1px solid var(--line); border-radius:16px; padding:14px 16px; text-align:left;}
+  .song-block-name{font-family:var(--serif); font-size:16px; margin-bottom:8px; color:var(--muted);}
+  .song-row{display:grid; grid-template-columns:44px 1fr; gap:2px 12px; padding:8px 0; border-top:1px solid var(--line);}
+  .song-row:first-of-type{border-top:none;}
+  .song-bpm{font-family:var(--serif); font-size:15px; grid-row:1 / 3; align-self:center;}
+  .song-title{font-size:14px; font-weight:600;}
+  .song-focus{font-size:12px; color:var(--muted);}
+
+  .jump-select{margin-top:14px; background:var(--panel); border:1px solid var(--line); color:var(--muted);
+    padding:10px 16px; border-radius:999px; font-family:var(--sans); text-align:center;
+    min-width:200px; max-width:90vw;}
+
+  .controls{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;}
+  .ctl-btn{background:transparent; border:1px solid var(--line); color:var(--text);
+    padding:16px 22px; border-radius:999px; font-size:14px; font-weight:600; cursor:pointer; min-width:64px;}
+  .ctl-btn.play{background:var(--text); border-color:var(--text); color:#0a0a0a; padding:16px 38px;}
+  .ctl-btn:active{transform:scale(.96);}
+
+  .setup-screen{display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px 20px; text-align:center;}
+  .setup-screen h2{margin:0; font-size:26px; font-family:var(--serif); font-weight:400;}
+  .setup-screen p{color:var(--muted); font-size:14px; max-width:360px; margin:0;}
+  .sound-settings-panel{width:100%; max-width:360px; display:flex; flex-direction:column; gap:12px;
+    margin-top:18px; padding-top:18px; border-top:1px solid var(--line);}
+  .sound-setting-row{display:flex; align-items:center; gap:12px;}
+  .sound-setting-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; flex:0 0 52px; text-align:right;}
+  .vol-quick-row{display:flex; align-items:center; justify-content:center; gap:0; margin-top:10px;}
+  .tagline{font-family:var(--serif); font-style:italic; color:var(--muted); font-size:15px; max-width:320px; margin:0; line-height:1.4;}
+
+  footer.hint{color:var(--muted); font-size:11px; text-align:center; padding:10px 20px 26px; letter-spacing:.01em;}
+
+  /* ---- Help ---- */
+  .help-section{margin-bottom:28px;}
+  .help-section h2{font-family:var(--serif); font-size:20px; font-weight:400; margin:0 0 10px;}
+  .help-section h3{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:16px 0 6px;}
+  .help-section p{font-size:14px; line-height:1.6; color:var(--text); margin:0 0 8px;}
+  .help-section ul{margin:0 0 8px; padding-left:18px;}
+  .help-section li{font-size:14px; line-height:1.7; color:var(--text);}
+  .help-tip{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin-bottom:10px;}
+  .help-tip p{margin:0; font-size:13px; color:var(--muted); line-height:1.5;}
+  .help-tip strong{color:var(--text);}
+  .help-divider{border:none; border-top:1px solid var(--line); margin:24px 0;}
+
+  @media (max-width:400px){
+    .timer{font-size:88px;}
+    .now-playing-title{font-size:20px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Altar<span>Class Timer</span></h1>
+    <div class="tabs">
+      <div class="tab active" id="tabEditor" onclick="showScreen('editor')">Build</div>
+      <div class="tab" id="tabRun" onclick="showScreen('run')">Run Class</div>
+      <div class="tab" id="tabLibrary" onclick="showScreen('library')">Classes</div>
+      <div class="tab" id="tabHelp" onclick="showScreen('help')">Help</div>
+    </div>
+  </header>
+
+  <div class="whoami-bar">
+    <span class="whoami-label">You are:</span>
+    <input type="text" id="whoamiInput" list="instructorList" placeholder="Select or type your name"
+      onchange="setCurrentUser(this.value)" onfocus="onNameFieldFocus(this)" onblur="onNameFieldBlur(this)">
+    <span class="whoami-hint">Used to track who created each class and to enable deleting your own.</span>
+  </div>
+
+  <main>
+    <!-- EDITOR -->
+    <div id="screenEditor">
+      <div class="title-row">
+        <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
+        <div class="title-row-actions">
+          <button class="btn good" onclick="saveClass()">Save Class</button>
+          <button class="btn danger ghost" onclick="buildNew()">Build New</button>
+        </div>
+      </div>
+      <div class="save-status-row"><span class="save-status" id="saveStatus"></span></div>
+
+      <div class="meta-row">
+        <div class="meta-field">
+          <label for="classDate">Date <span style="text-transform:none; letter-spacing:0;">(MM/DD/YYYY)</span></label>
+          <input type="text" id="classDate" placeholder="MM/DD/YYYY" inputmode="numeric" onchange="setDateField(this.value)">
+          <span class="field-hint" id="dateHint"></span>
+        </div>
+        <div class="meta-field">
+          <label for="classTypeDisplay">Class type</label>
+          <div class="combo" id="classTypeCombo">
+            <button type="button" class="combo-display" id="classTypeDisplay" onclick="toggleCombo('classType')">Select class type…</button>
+            <div class="combo-menu hidden" id="classTypeMenu"></div>
+          </div>
+        </div>
+        <div class="meta-field">
+          <label for="classInstructor">Instructor</label>
+          <input type="text" id="classInstructor" list="instructorList" placeholder="Type or select a name"
+            onchange="setMeta('instructor', this.value)" onfocus="onNameFieldFocus(this)" onblur="onNameFieldBlur(this)">
+          <datalist id="instructorList">
+            <!-- INSTRUCTOR_OPTIONS -->
+          </datalist>
+        </div>
+      </div>
+
+      <div class="meta-field" style="margin-bottom:16px;">
+        <label for="classDescription">Description <span style="text-transform:none; letter-spacing:0;">(shows up when browsing Classes)</span></label>
+        <input type="text" id="classDescription" placeholder="e.g. Glutes, hamstrings, and back — standing/mat only, no bands" onchange="setMeta('description', this.value)">
+      </div>
+
+      <div class="meta-field" style="margin-bottom:16px;">
+        <label for="classMessage">Message / inspo</label>
+        <div class="rte-toolbar">
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('bold')"><b>B</b></button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('italic')"><i>I</i></button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('insertUnorderedList')">• List</button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(1)">Indent →</button>
+          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(-1)">← Outdent</button>
+        </div>
+        <div id="classMessage" class="rte-editor" contenteditable="true"
+          data-placeholder="Icebreaker, theme, motivational message for this class... Use • List, then Tab on a bullet for a sub-bullet."
+          oninput="onMessageInput()" onkeydown="onMessageKeydown(event)"></div>
+      </div>
+
+      <div class="target-row">
+        <label for="targetMinutes">Target length</label>
+        <input class="rounds-input" id="targetMinutes" type="number" min="1" value="45" onchange="setTargetMinutes(this.value)">
+        <span class="unit">min</span>
+      </div>
+
+      <div class="toolbar" id="toolbarTop">
+        <button class="btn primary" onclick="addBlock()">+ Add Block</button>
+      </div>
+
+      <div id="blocksWrap"></div>
+
+      <div class="toolbar hidden" id="toolbarBottom">
+        <button class="btn primary" onclick="addBlock()">+ Add Block</button>
+      </div>
+    </div>
+
+    <!-- RUNNER -->
+    <div id="screenRun" class="hidden">
+      <div class="message-drawer">
+        <button type="button" class="message-drawer-toggle" onclick="toggleMessageDrawer()">
+          <span>Message / Inspo</span>
+          <span id="messageDrawerChevron">▾</span>
+        </button>
+        <div id="messageDrawerContent" class="message-drawer-content hidden"></div>
+      </div>
+
+      <div id="runSubModeToggle" class="format-toggle run-submode-toggle hidden">
+        <button type="button" class="format-btn" id="subModeSyncBtn" onclick="setRunSubMode('music')">SYNC</button>
+        <button type="button" class="format-btn" id="subModeIronBtn" onclick="setRunSubMode('time')">IRON</button>
+      </div>
+
+      <div id="runMusicView" class="hidden"></div>
+
+      <div id="runSetup" class="setup-screen">
+        <h2>Ready to run</h2>
+        <p class="tagline">Come as you are, we will meet you there.</p>
+        <p id="runSummary">Build your class in the Build tab, then tap Start. Keep your volume up — the timer beeps and buzzes through your speakers.</p>
+        <button class="btn primary" style="padding:16px 36px; font-size:15px;" onclick="startRun()">▶ Start Class</button>
+        <div class="sound-settings-panel">
+          <div class="sound-setting-row">
+            <span class="sound-setting-label">Sound</span>
+            <div class="format-toggle" id="soundProfileToggle"></div>
+          </div>
+          <div class="sound-setting-row">
+            <span class="sound-setting-label">Volume</span>
+            <div class="format-toggle" id="volumeToggle"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="runActive" class="runner hidden">
+        <div class="progress-line" id="progressLine">Block 1 of 1 · Round 1 of 1</div>
+        <div class="type-pill work" id="typePill" onclick="togglePause()" title="Tap to pause / resume">WORK</div>
+        <div class="timer-row">
+          <button class="ctl-btn arrow-btn" onclick="skip(-1)" title="Back">◀</button>
+          <div class="timer work" id="timerDisplay">0:00</div>
+          <button class="ctl-btn arrow-btn" onclick="skip(1)" title="Skip">▶</button>
+        </div>
+        <div class="time-adj">
+          <button class="ctl-btn" onclick="addTime(-10)">-10s</button>
+          <button class="ctl-btn" onclick="addTime(15)">+15s</button>
+        </div>
+        <div class="format-toggle vol-quick-row" id="volQuickRow"></div>
+
+        <div class="now-playing">
+          <div class="now-playing-label">Now Playing</div>
+          <div class="now-playing-title" id="movementName">—</div>
+        </div>
+
+        <div class="playlist-wrap">
+          <div class="playlist-label">Up Next</div>
+          <div class="playlist-scroll" id="playlistScroll"></div>
+        </div>
+
+        <select class="jump-select" id="jumpSelect" onchange="onJumpSelect(this.value)">
+          <option value="">Jump to block…</option>
+        </select>
+
+        <button class="ctl-btn" style="margin-top:24px; color:var(--muted);" onclick="stopRun()">End Class</button>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div id="screenLibrary" class="hidden">
+      <div class="lib-filters">
+        <div class="combo" id="filterClassTypeCombo">
+          <button type="button" class="combo-display" id="filterClassTypeDisplay" onclick="toggleCombo('filterClassType')">All class types</button>
+          <div class="combo-menu hidden" id="filterClassTypeMenu"></div>
+        </div>
+        <select id="filterInstructor" onchange="setLibraryFilter('instructor', this.value)">
+          <option value="">All instructors</option>
+          <!-- INSTRUCTOR_OPTIONS -->
+        </select>
+        <input type="text" id="filterKeyword" placeholder="Search keywords…" oninput="setLibraryFilter('keyword', this.value)">
+        <button class="btn small" id="sortDirBtn" onclick="toggleSortDir()">Date ↓ Newest</button>
+        <button class="btn small ghost" onclick="refreshLibrary()">↻ Refresh</button>
+        <button class="btn small ghost" onclick="toggleDeletionLog()">Deletion history</button>
+      </div>
+      <div class="lib-status" id="libraryStatus"></div>
+      <div id="deletionLogPanel" class="hidden"></div>
+      <div id="libraryList"></div>
+    </div>
+    <!-- HELP -->
+    <div id="screenHelp" class="hidden">
+
+      <div class="help-section">
+        <h2>Getting Started</h2>
+        <div class="help-tip"><p><strong>Set "You are" first.</strong> Tap the name field at the top and select your name. This tracks who created each class and controls who can delete it.</p></div>
+        <p>The app has four tabs: <strong>Build</strong> to create a class, <strong>Run Class</strong> to run it with a live timer, <strong>Classes</strong> to browse and load saved classes, and <strong>Help</strong> (you're here).</p>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h2>Build Tab</h2>
+        <h3>Class Info</h3>
+        <p>Fill in the date, class type, instructor, and an optional description. The class name auto-fills from the date and class type — you can keep typing to add a theme or focus (e.g. "8.31.26 IRON 45 — Posterior Chain").</p>
+        <p>The <strong>Message / Inspo</strong> field is for your icebreaker, theme, and talking points. It shows up as a collapsible drawer when you run the class.</p>
+
+        <h3>Blocks &amp; Movements</h3>
+        <ul>
+          <li>Tap <strong>+ Add Block</strong> to add a circuit block. Give it a name, set the number of rounds, then add movements inside it.</li>
+          <li>Each movement has <strong>Sets</strong>, <strong>Work (seconds)</strong>, and <strong>Rest (seconds)</strong>. Sets repeat that single movement back-to-back before moving on. Rounds repeat the whole block circuit.</li>
+          <li>Drag the <strong>⠿</strong> handle to reorder blocks or movements.</li>
+          <li>The time bar at the bottom shows your estimated total vs. target length in real time.</li>
+        </ul>
+
+        <h3>Saving</h3>
+        <p>Tap <strong>Save Class</strong> to save to the cloud — it becomes visible on any device under the Classes tab. Your draft auto-saves locally as you build.</p>
+        <p>Tap <strong>Build New</strong> to clear and start fresh. You'll be prompted to save first if you have unsaved blocks.</p>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h2>Run Class Tab</h2>
+        <h3>Before You Start</h3>
+        <ul>
+          <li>Choose your <strong>Sound</strong> (Classic, Bell, Beep, or Off) and <strong>Volume</strong>. Tapping either plays a preview.</li>
+          <li>Tap <strong>▶ Start Class</strong> when ready. Keep your volume up — the timer beeps through your speakers.</li>
+        </ul>
+
+        <h3>During Class</h3>
+        <ul>
+          <li>Tap the <strong>WORK / REST pill</strong> to pause and resume. It shows "PAUSED" so you always know the state.</li>
+          <li>Tap <strong>◀</strong> or <strong>▶</strong> on either side of the timer to go back or skip a step.</li>
+          <li>Use <strong>-10s</strong> and <strong>+15s</strong> to adjust the current countdown on the fly.</li>
+          <li>The <strong>volume row</strong> (✕ / Low / Med / High) is always visible — adjust mid-class without stopping anything.</li>
+          <li>Tap any movement in the <strong>Up Next</strong> list to jump straight to it.</li>
+          <li>Use <strong>Jump to block</strong> to skip ahead to any block.</li>
+        </ul>
+
+        <h3>Ending Class</h3>
+        <p>Tap <strong>End Class</strong> at the bottom to stop and return to the setup screen.</p>
+
+        <div class="help-tip"><p><strong>Tip:</strong> On iPhone or iPad, tap Share → Add to Home Screen in Safari so the app opens full-screen like a native app during class.</p></div>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h2>Classes Tab</h2>
+        <p>All saved classes from all instructors are listed here, newest first. Filter by class type, instructor, or keyword. Tap <strong>Load</strong> to bring a class into the Build tab. Tap <strong>Duplicate</strong> to copy it as a new class you can edit.</p>
+        <p>You can only delete classes you created. Deletions are logged and can be reviewed under <strong>Deletion history</strong>.</p>
+        <div class="help-tip"><p><strong>Tap ↻ Refresh</strong> any time to pull the latest classes from the cloud — useful if another instructor just saved something.</p></div>
+      </div>
+
+      <hr class="help-divider">
+
+      <div class="help-section">
+        <h2>Class Types</h2>
+        <ul>
+          <li><strong>IRON 45</strong> — Heavy weight lifting. Time-based blocks with work/rest intervals.</li>
+          <li><strong>IGNITE 45</strong> — HIIT strength training. Time-based.</li>
+          <li><strong>GROUNDWRK</strong> — Mat Pilates. Time-based.</li>
+          <li><strong>ECHO</strong> — Dance cardio. Song/BPM format, no timer.</li>
+          <li><strong>SYNC 45 / SYNC 60</strong> — Cycle. Song/BPM format, no timer.</li>
+          <li><strong>SYNC 30 x IRON 30</strong> — Mixed. Each block picks its own format — SYNC (song list) or IRON (timer).</li>
+        </ul>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="total-bar" id="totalBar">
+    <span>Est. total class time</span>
+    <span><b id="totalTime">0:00</b><span id="totalTarget" style="font-size:12px;"> / 45:00</span></span>
+  </div>
+  <footer class="hint">Tip: In Chrome on iPad/iPhone, tap the Share icon in the address bar → Add to Home Screen so this opens full-screen like an app during class.</footer>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   DATA MODEL
+   workout = { name, targetMinutes, blocks: [ { name, rounds, steps: [ {label, sets, work, rest} ] } ] }
+   - "rounds" (block-level) repeats the WHOLE circuit of steps in order — good for cycling
+     through different movements together.
+   - "sets" (per movement) repeats just that one movement back-to-back before moving on —
+     good for a straight-sets ladder like A1/A2/A3 at different loads, all in one block.
+   - Total time per step = sets x (work + rest). Total per block = rounds x sum(steps).
+--------------------------------------------------------- */
+let workout = null;
+let library = [];
+const STORAGE_KEY = 'altarClassTimerWorkout_v1';
+const CURRENT_USER_KEY = 'altarCurrentUser';
+
+/* ---------------------------------------------------------
+   CURRENT USER — a lightweight, no-login stand-in for "who's
+   using this app right now" on this device. Not real auth:
+   it's a name someone picks, stored on this device only. It's
+   used to (a) prefill Instructor on new classes, (b) record who
+   created a class, and (c) gate the Delete button so only the
+   creator sees it for their own classes.
+--------------------------------------------------------- */
+function getCurrentUser(){
+  try{ return localStorage.getItem(CURRENT_USER_KEY) || ''; }catch(e){ return ''; }
+}
+function setCurrentUser(name){
+  try{ localStorage.setItem(CURRENT_USER_KEY, name || ''); }catch(e){}
+  renderLibrary();
+}
+
+function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+/* ---------------------------------------------------------
+   FIXED OPTION LISTS
+--------------------------------------------------------- */
+// Each class type has a short TITLE (what's stored, and all that shows once
+// selected/closed) and a longer DESCRIPTOR (only shown while browsing the
+// options, to help pick the right one).
+const CLASS_TYPE_OPTIONS = [
+  { value: "ECHO", fullLabel: "ECHO - Dance Cardio" },
+  { value: "GROUNDWRK", fullLabel: "GROUNDWRK - Mat Pilates" },
+  { value: "IGNITE 45", fullLabel: "IGNITE 45 - HIIT Strength Training" },
+  { value: "IRON 45", fullLabel: "IRON 45 - Heavy Weight Lifting" },
+  { value: "SYNC 30 x IRON 30", fullLabel: "SYNC 30 x IRON 30" },
+  { value: "SYNC 45", fullLabel: "SYNC 45 - Cycle" },
+  { value: "SYNC 60", fullLabel: "SYNC 60 - Cycle" },
+];
+// Back-compat: some already-saved classes stored the old combined
+// "TITLE - Descriptor" string. classTypeShortLabel() (below) strips
+// anything after a dash, so those still resolve to the right short title.
+const CLASS_TYPES = CLASS_TYPE_OPTIONS.map(o => o.value);
+
+const INSTRUCTORS = [
+  "Ally White", "April Alford", "Audri Saylors", "Chloe Riddle", "Courtland Olson",
+  "Kaleigh Molgaard", "Kenna Lightle", "Krysta Winkelmann", "Madison Combs",
+  "Sydney Wilhelms", "Vern Davis",
+].sort((a, b) => a.localeCompare(b));
+// Display-only short form — "Sydney Wilhelms" -> "Sydney W." — used
+// everywhere an instructor name is shown or picked, since full last names
+// aren't needed day-to-day. The full name is never stored anymore for new
+// picks (short form is used directly as the instructor value); createdBy/
+// accountability rides on the separate "You are" field, not this one.
+function shortInstructorName(name){
+  const parts = String(name || '').trim().split(/\s+/);
+  if(parts.length < 2) return name || '';
+  return parts[0] + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+}
+const INSTRUCTOR_SHORT_NAMES = INSTRUCTORS.map(shortInstructorName);
+
+/* ---------------------------------------------------------
+   BLOCK FORMAT BY CLASS TYPE
+   'time'  — the existing sets x work x rest strength format (IGNITE 45, IRON 45, GROUNDWRK)
+   'music' — BPM / Song Title / Focus-Choreo columns, no timer in Run Class (SYNC 45, SYNC 60, ECHO)
+   'mixed' — SYNC 30 x IRON 30: each block picks its own format
+--------------------------------------------------------- */
+const CLASS_FORMAT_MODE = {
+  'ECHO': 'music',
+  'GROUNDWRK': 'time',
+  'IGNITE 45': 'time',
+  'IRON 45': 'time',
+  'SYNC 30 x IRON 30': 'mixed',
+  'SYNC 45': 'music',
+  'SYNC 60': 'music',
+};
+function classFormatMode(classType){
+  return CLASS_FORMAT_MODE[classTypeShortLabel(classType)] || 'time';
+}
+function defaultStepForFormat(format){
+  return format === 'music'
+    ? { _id: uid(), bpm: '', song: '', focus: '' }
+    : { _id: uid(), label: '', sets: 1, work: 30, rest: 0 };
+}
+// Looks at a step's actual fields to guess which format it was built for,
+// independent of any .format tag on its parent block. Used so legacy blocks
+// (saved before the format concept existed) can be tagged correctly WITHOUT
+// wiping their real content — we only ever reset steps when they are a
+// genuine, confirmed shape mismatch, not just "no tag yet".
+function inferStepFormat(step){
+  if(!step) return null;
+  const hasMusic = !!(step.song || step.bpm !== undefined && step.bpm !== '' || step.focus);
+  const hasTime = !!(step.label || step.work !== undefined && step.work !== '' || (step.rest !== undefined && step.rest !== ''));
+  if(hasMusic && !hasTime) return 'music';
+  if(hasTime && !hasMusic) return 'time';
+  return null; // ambiguous (e.g. brand-new blank step) — can't tell, don't guess
+}
+// Keeps every block's format consistent with the class type. For fixed
+// class types ('time'/'music'), a block missing a .format tag (legacy data)
+// is tagged in place based on its actual step shape — steps are only reset
+// when they're a confirmed, genuine mismatch with the class type's format,
+// never just because the tag was absent. For 'mixed' class types, each
+// block keeps whatever format it already has (inferring from steps, then
+// defaulting new/invalid ones to 'music').
+function normalizeBlockFormats(w){
+  w = w || workout;
+  const mode = classFormatMode(w.classType);
+  (w.blocks || []).forEach(block => {
+    const inferred = block.steps && block.steps.length ? inferStepFormat(block.steps[0]) : null;
+    if(mode === 'mixed'){
+      if(block.format !== 'time' && block.format !== 'music') block.format = inferred || 'music';
+      return;
+    }
+    if(!block.format){
+      // No tag yet (legacy block). Tag it as this class's mode, and only wipe
+      // steps if we can positively tell they're the wrong shape for that mode.
+      block.format = mode;
+      if(inferred && inferred !== mode){
+        block.steps = [ defaultStepForFormat(mode) ];
+      }
+      return;
+    }
+    if(block.format !== mode){
+      // Already explicitly tagged with a conflicting format — a real mismatch.
+      block.format = mode;
+      block.steps = [ defaultStepForFormat(mode) ];
+    }
+  });
+}
+
+/* ---------------------------------------------------------
+   DATE HELPERS — dates are stored/entered as MM/DD/YYYY
+--------------------------------------------------------- */
+function isValidMDY(str){
+  if(!str) return false;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(str).trim());
+  if(!m) return false;
+  const month = parseInt(m[1], 10), day = parseInt(m[2], 10), year = parseInt(m[3], 10);
+  if(month < 1 || month > 12) return false;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if(day < 1 || day > daysInMonth) return false;
+  return true;
+}
+function parseMDY(str){
+  if(!isValidMDY(str)) return null;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(str).trim());
+  return new Date(parseInt(m[3], 10), parseInt(m[1], 10) - 1, parseInt(m[2], 10));
+}
+function todayMDY(){
+  const d = new Date();
+  return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+
+function ensureIds(w){
+  (w.blocks||[]).forEach(b => {
+    if(!b._id) b._id = uid();
+    (b.steps||[]).forEach(s => {
+      if(!s._id) s._id = uid();
+      if(s.sets == null) s.sets = 1;
+    });
+  });
+  if(w.targetMinutes == null) w.targetMinutes = 45;
+  // Migrate legacy ISO dates (YYYY-MM-DD, from the old native date picker) to MM/DD/YYYY.
+  if(w.date && /^\d{4}-\d{2}-\d{2}$/.test(w.date)){
+    const [y, mo, da] = w.date.split('-');
+    w.date = parseInt(mo, 10) + '/' + parseInt(da, 10) + '/' + y;
+  }
+  if(w.date == null || w.date === '' || !isValidMDY(w.date)) w.date = todayMDY();
+  if(w.classType == null) w.classType = w.muscleGroup || '';
+  normalizeBlockFormats(w);
+  // Normalize legacy full-name instructor values ("Sydney Wilhelms") to the
+  // short display form ("Sydney W.") on load, so the Build page always shows
+  // (and re-saves) the short form consistently going forward.
+  if(w.instructor == null) w.instructor = '';
+  else w.instructor = shortInstructorName(w.instructor);
+  if(w.description == null) w.description = '';
+  if(w.message == null) w.message = '';
+  if(w.id === undefined) w.id = null;
+  if(w.createdBy == null) w.createdBy = '';
+  if(w.name == null) w.name = '';
+  // Baseline for the auto-title sync logic below — reflects what a fresh
+  // auto-generated title would look like for THIS workout's date/type, before
+  // it becomes the active `workout`.
+  lastTitlePrefix = autoTitlePrefix(w);
+  if(!w.name.trim()) w.name = lastTitlePrefix;
+  return w;
+}
+
+/* ---------------------------------------------------------
+   AUTO-TITLE — the class title auto-fills from date + class
+   type (e.g. "7.14.26 IRON 45"), and the user can keep typing
+   to finish it (a theme, focus, etc.). If they later change the
+   date or class type, we update just that leading portion and
+   leave anything they've appended alone. If they've rewritten
+   the title into something that no longer matches the known
+   auto-prefix, we don't touch it — it's fully theirs at that point.
+--------------------------------------------------------- */
+let lastTitlePrefix = '';
+
+function classTypeShortLabel(type){
+  if(!type) return '';
+  const dashIdx = type.indexOf('-');
+  return (dashIdx > -1 ? type.slice(0, dashIdx) : type).trim();
+}
+function dateShortLabel(dateStr){
+  const d = parseMDY(dateStr);
+  if(!d) return '';
+  return (d.getMonth() + 1) + '.' + d.getDate() + '.' + String(d.getFullYear()).slice(-2);
+}
+function autoTitlePrefix(w){
+  w = w || workout;
+  if(!w) return '';
+  return [dateShortLabel(w.date), classTypeShortLabel(w.classType)].filter(Boolean).join(' ');
+}
+function applyAutoTitle(){
+  const newPrefix = autoTitlePrefix();
+  if(!newPrefix) return;
+  const current = workout.name || '';
+  if(!current.trim() || current === lastTitlePrefix){
+    workout.name = newPrefix;
+  } else if(lastTitlePrefix && current.startsWith(lastTitlePrefix)){
+    workout.name = newPrefix + current.slice(lastTitlePrefix.length);
+  }
+  // else: title has diverged from any known auto-prefix — it's fully custom now, leave it.
+  lastTitlePrefix = newPrefix;
+  const nameInput = document.getElementById('workoutName');
+  if(nameInput && document.activeElement !== nameInput) nameInput.value = workout.name;
+  save();
+}
+
+function newWorkout(){
+  return { name: "", targetMinutes: 45, blocks: [] };
+}
+function newBlock(format){
+  const fmt = format || 'time';
+  return { _id: uid(), name: "New Block", rounds: 1, format: fmt, steps: [ defaultStepForFormat(fmt) ] };
+}
+
+/* ---------------------------------------------------------
+   PERSISTENCE
+--------------------------------------------------------- */
+function save(){
+  try{
+    workout.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workout));
+  }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+/* ---------------------------------------------------------
+   EDITOR RENDER
+--------------------------------------------------------- */
+function renderEditor(){
+  const nameInputEl = document.getElementById('workoutName');
+  if(nameInputEl && document.activeElement !== nameInputEl) nameInputEl.value = workout.name;
+  const dateInput = document.getElementById('classDate');
+  if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
+  renderClassTypeCombo();
+  const instrInput = document.getElementById('classInstructor');
+  if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
+  const descInput = document.getElementById('classDescription');
+  if(document.activeElement !== descInput) descInput.value = workout.description || '';
+  const msgInput = document.getElementById('classMessage');
+  if(msgInput && document.activeElement !== msgInput) msgInput.innerHTML = workout.message || '';
+  const targetInput = document.getElementById('targetMinutes');
+  if(document.activeElement !== targetInput) targetInput.value = workout.targetMinutes || 45;
+
+  const toolbarTop = document.getElementById('toolbarTop');
+  const toolbarBottom = document.getElementById('toolbarBottom');
+  const hasBlocks = workout.blocks.length > 0;
+  if(toolbarTop) toolbarTop.classList.toggle('hidden', hasBlocks);
+  if(toolbarBottom) toolbarBottom.classList.toggle('hidden', !hasBlocks);
+
+  const wrap = document.getElementById('blocksWrap');
+  wrap.innerHTML = '';
+  const classMode = classFormatMode(workout.classType);
+  workout.blocks.forEach((block, bi) => {
+    const div = document.createElement('div');
+    div.className = 'block';
+    div.dataset.id = block._id;
+    const format = block.format || 'time';
+
+    const formatToggle = classMode === 'mixed'
+      ? `<div class="format-toggle">
+          <button type="button" class="format-btn ${format==='music'?'active':''}" onclick="setBlockFormat(${bi},'music')">SYNC</button>
+          <button type="button" class="format-btn ${format==='time'?'active':''}" onclick="setBlockFormat(${bi},'time')">IRON</button>
+        </div>`
+      : '';
+
+    const head = document.createElement('div');
+    head.className = 'block-head';
+    head.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder block">⠿</span>
+      <input class="block-name" value="${escapeAttr(block.name)}" onchange="setBlockName(${bi}, this.value)">
+      ${formatToggle}
+      <div class="rounds-wrap" title="Repeats the whole circuit below, in order">Rounds
+        <input class="rounds-input" type="number" min="1" value="${block.rounds}" onchange="setBlockRounds(${bi}, this.value)">
+      </div>
+      <button class="btn small danger" onclick="removeBlock(${bi})">Delete</button>
+    `;
+    div.appendChild(head);
+
+    const colHead = document.createElement('div');
+    if(format === 'music'){
+      colHead.className = 'col-head music-cols';
+      colHead.innerHTML = `<span class="lbl"></span><span class="lbl">BPM</span><span class="lbl" style="text-align:left;">SONG TITLE</span><span class="lbl" style="text-align:left;">FOCUS/CHOREO</span><span class="lbl"></span>`;
+    } else {
+      colHead.className = 'col-head';
+      colHead.innerHTML = `<span class="lbl"></span><span class="lbl" style="text-align:left;">MOVEMENT</span><span class="lbl">SETS</span><span class="lbl">WORK s</span><span class="lbl">REST s</span><span class="lbl"></span>`;
+    }
+    div.appendChild(colHead);
+
+    block.steps.forEach((step, si) => {
+      const row = document.createElement('div');
+      row.className = format === 'music' ? 'step-row music-cols' : 'step-row';
+      row.dataset.id = step._id;
+      if(format === 'music'){
+        row.innerHTML = `
+          <span class="step-handle" title="Drag to reorder song">⠿</span>
+          <input type="number" min="0" placeholder="BPM" value="${escapeAttr(step.bpm)}" onchange="setStepField(${bi},${si},'bpm',this.value)">
+          <input type="text" placeholder="Song title" value="${escapeAttr(step.song)}" onchange="setStepField(${bi},${si},'song',this.value)">
+          <input type="text" placeholder="Focus / choreo notes" value="${escapeAttr(step.focus)}" onchange="setStepField(${bi},${si},'focus',this.value)">
+          <button class="btn small danger icon-btn" onclick="removeStep(${bi},${si})">✕</button>
+        `;
+      } else {
+        row.innerHTML = `
+          <span class="step-handle" title="Drag to reorder movement">⠿</span>
+          <input type="text" placeholder="Movement name" value="${escapeAttr(step.label)}" onchange="setStepField(${bi},${si},'label',this.value)">
+          <input type="number" min="1" value="${step.sets||1}" title="Sets" onchange="setStepField(${bi},${si},'sets',this.value)">
+          <input type="number" min="0" value="${step.work}" title="Work seconds" onchange="setStepField(${bi},${si},'work',this.value)">
+          <input type="number" min="0" value="${step.rest}" title="Rest seconds" onchange="setStepField(${bi},${si},'rest',this.value)">
+          <button class="btn small danger icon-btn" onclick="removeStep(${bi},${si})">✕</button>
+        `;
+      }
+      div.appendChild(row);
+
+      const stepHandle = row.querySelector('.step-handle');
+      initDragHandle(stepHandle, row, ':scope > .step-row', () => {
+        const order = Array.from(div.querySelectorAll(':scope > .step-row')).map(el => el.dataset.id);
+        workout.blocks[bi].steps = order.map(id => workout.blocks[bi].steps.find(s => s._id === id));
+        save(); renderEditor();
+      });
+    });
+
+    const footer = document.createElement('div');
+    footer.className = 'block-footer';
+    footer.innerHTML = format === 'music'
+      ? `<button class="btn small" onclick="addStep(${bi})">+ Song</button>
+         <span class="block-time">${block.steps.length} song${block.steps.length===1?'':'s'}</span>`
+      : `<button class="btn small" onclick="addStep(${bi})">+ Movement</button>
+         <span class="block-time">${fmtTime(blockDuration(block))} total</span>`;
+    div.appendChild(footer);
+
+    wrap.appendChild(div);
+
+    const blockHandle = head.querySelector('.drag-handle');
+    initDragHandle(blockHandle, div, ':scope > .block', () => {
+      const order = Array.from(wrap.querySelectorAll(':scope > .block')).map(el => el.dataset.id);
+      workout.blocks = order.map(id => workout.blocks.find(b => b._id === id));
+      save(); renderEditor();
+    });
+  });
+  updateTotalBar();
+}
+
+/* ---------------------------------------------------------
+   DRAG & DROP (pointer-based, touch-friendly)
+--------------------------------------------------------- */
+function initDragHandle(handleEl, rowEl, siblingSelector, onDrop){
+  handleEl.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    const parent = rowEl.parentElement;
+    rowEl.classList.add('dragging');
+    try{ handleEl.setPointerCapture(e.pointerId); }catch(err){}
+
+    function getSiblings(){ return Array.from(parent.querySelectorAll(siblingSelector)); }
+
+    function onMove(ev){
+      ev.preventDefault();
+      const y = ev.clientY;
+      const siblings = getSiblings();
+      const rowIndex = siblings.indexOf(rowEl);
+      for(let i = 0; i < siblings.length; i++){
+        const sib = siblings[i];
+        if(sib === rowEl) continue;
+        const rect = sib.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if(i < rowIndex && y < mid){ parent.insertBefore(rowEl, sib); break; }
+        if(i > rowIndex && y > mid){ parent.insertBefore(rowEl, sib.nextSibling); break; }
+      }
+    }
+    function onUp(){
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      rowEl.classList.remove('dragging');
+      onDrop();
+    }
+    document.addEventListener('pointermove', onMove, { passive:false });
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  }, { passive:false });
+}
+
+function escapeAttr(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+function setBlockName(bi, val){ workout.blocks[bi].name = val; save(); updateTotalBar(); }
+function setBlockRounds(bi, val){ workout.blocks[bi].rounds = Math.max(1, parseInt(val)||1); save(); renderEditor(); }
+function setBlockFormat(bi, fmt){
+  const block = workout.blocks[bi];
+  if(block.format === fmt) return;
+  const hasContent = block.steps.some(s => String(s.label || s.song || s.bpm || s.focus || '').trim());
+  if(hasContent && !confirm('Switching this block\'s format clears its movements/songs — they use different fields. Continue?')) return;
+  block.format = fmt;
+  block.steps = [ defaultStepForFormat(fmt) ];
+  save(); renderEditor();
+}
+function setStepField(bi, si, field, val){
+  const step = workout.blocks[bi].steps[si];
+  if(field === 'label' || field === 'song' || field === 'focus') step[field] = val;
+  else if(field === 'sets') step.sets = Math.max(1, parseInt(val)||1);
+  else if(field === 'bpm') step.bpm = val === '' ? '' : Math.max(0, parseInt(val)||0);
+  else step[field] = Math.max(0, parseInt(val)||0);
+  save(); renderEditor();
+}
+function addBlock(){
+  const mode = classFormatMode(workout.classType);
+  workout.blocks.push(newBlock(mode === 'mixed' ? 'music' : mode));
+  save(); renderEditor();
+}
+function removeBlock(bi){ workout.blocks.splice(bi,1); save(); renderEditor(); }
+function addStep(bi){
+  const block = workout.blocks[bi];
+  block.steps.push(defaultStepForFormat(block.format || 'time'));
+  save(); renderEditor();
+}
+function removeStep(bi, si){
+  const block = workout.blocks[bi];
+  block.steps.splice(si,1);
+  if(block.steps.length === 0) block.steps.push(defaultStepForFormat(block.format || 'time'));
+  save(); renderEditor();
+}
+function onNameChange(){
+  workout.name = document.getElementById('workoutName').value;
+  save();
+}
+function setMeta(field, val){
+  workout[field] = val;
+  if(field === 'classType'){
+    normalizeBlockFormats();
+    applyAutoTitle(); // also saves
+    renderEditor();
+  } else {
+    save();
+  }
+}
+
+function setDateField(val){
+  const hintEl = document.getElementById('dateHint');
+  if(!isValidMDY(val)){
+    if(hintEl) hintEl.textContent = 'Enter date as MM/DD/YYYY';
+    return;
+  }
+  if(hintEl) hintEl.textContent = '';
+  workout.date = val;
+  applyAutoTitle();
+  save();
+}
+
+/* ---------------------------------------------------------
+   RICH TEXT EDITOR — Message / inspo. Plain contenteditable +
+   execCommand, no external library. Tab/Shift+Tab on a bullet
+   indent/outdent it into a sub-bullet (nested <ul>).
+--------------------------------------------------------- */
+function rteCmd(command, value){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  editor.focus();
+  try{ document.execCommand(command, false, value || null); }catch(e){}
+  onMessageInput();
+}
+
+function rteIndent(dir){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  editor.focus();
+  try{ document.execCommand(dir > 0 ? 'indent' : 'outdent', false, null); }catch(e){}
+  onMessageInput();
+}
+
+function inListItem(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0) return false;
+  let node = sel.getRangeAt(0).startContainer;
+  while(node){
+    if(node.nodeType === 1 && node.tagName === 'LI') return true;
+    node = node.parentNode;
+  }
+  return false;
+}
+
+function onMessageKeydown(event){
+  if(event.key === 'Tab' && inListItem()){
+    event.preventDefault();
+    rteIndent(event.shiftKey ? -1 : 1);
+  }
+}
+
+function onMessageInput(){
+  const editor = document.getElementById('classMessage');
+  if(!editor) return;
+  workout.message = editor.innerHTML;
+  save();
+}
+
+function populateStaticOptions(){
+  const instrList = document.getElementById('instructorList');
+  if(instrList && instrList.options.length === 0){
+    INSTRUCTOR_SHORT_NAMES.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      instrList.appendChild(opt);
+    });
+  }
+  const filterInstr = document.getElementById('filterInstructor');
+  if(filterInstr && filterInstr.options.length <= 1){
+    INSTRUCTOR_SHORT_NAMES.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      filterInstr.appendChild(opt);
+    });
+  }
+  renderClassTypeCombo();
+  renderFilterClassTypeCombo();
+}
+
+/* ---------------------------------------------------------
+   NAME FIELDS (Instructor / "You are") — datalist inputs don't
+   reliably reopen their full suggestion list once already filled
+   with a value on mobile Safari. Clearing on focus (and restoring
+   on blur if nothing was picked) forces the whole list to show
+   every time the field is tapped.
+--------------------------------------------------------- */
+function onNameFieldFocus(el){
+  el.dataset.prevValue = el.value;
+  el.value = '';
+}
+function onNameFieldBlur(el){
+  if(el.value.trim() === '' && el.dataset.prevValue){
+    el.value = el.dataset.prevValue;
+  }
+}
+
+/* ---------------------------------------------------------
+   CLASS TYPE COMBO — a native <select> can't show different text
+   while browsing vs. once picked, so this is a small custom
+   dropdown: the option list shows the full class name (e.g. "IRON 45
+   - Heavy Weight Lifting") to help you pick, but the closed display
+   and the stored value are always just the short title (e.g. "IRON 45").
+--------------------------------------------------------- */
+function closeAllCombos(){
+  document.querySelectorAll('.combo-menu').forEach(m => m.classList.add('hidden'));
+}
+function toggleCombo(which){
+  const menu = document.getElementById(which + 'Menu');
+  if(!menu) return;
+  const isOpen = !menu.classList.contains('hidden');
+  closeAllCombos();
+  if(!isOpen) menu.classList.remove('hidden');
+}
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.combo')) closeAllCombos();
+});
+
+function renderClassTypeCombo(){
+  const display = document.getElementById('classTypeDisplay');
+  const menu = document.getElementById('classTypeMenu');
+  if(!display || !menu || !workout) return;
+  const currentShort = classTypeShortLabel(workout.classType);
+  const current = CLASS_TYPE_OPTIONS.find(o => o.value === currentShort);
+  display.textContent = current ? current.value : 'Select class type…';
+  menu.innerHTML = CLASS_TYPE_OPTIONS.map(o => `
+    <button type="button" class="combo-option ${current && current.value === o.value ? 'active' : ''}" onclick="pickClassType('${escapeAttr(o.value)}')">${escapeAttr(o.fullLabel)}</button>
+  `).join('');
+}
+function pickClassType(value){
+  setMeta('classType', value);
+  closeAllCombos();
+}
+
+function renderFilterClassTypeCombo(){
+  const display = document.getElementById('filterClassTypeDisplay');
+  const menu = document.getElementById('filterClassTypeMenu');
+  if(!display || !menu) return;
+  const current = CLASS_TYPE_OPTIONS.find(o => o.value === libraryFilters.classType);
+  display.textContent = current ? current.value : 'All class types';
+  const allBtn = `<button type="button" class="combo-option ${!libraryFilters.classType ? 'active' : ''}" onclick="pickFilterClassType('')">All class types</button>`;
+  const rest = CLASS_TYPE_OPTIONS.map(o => `
+    <button type="button" class="combo-option ${libraryFilters.classType === o.value ? 'active' : ''}" onclick="pickFilterClassType('${escapeAttr(o.value)}')">${escapeAttr(o.fullLabel)}</button>
+  `).join('');
+  menu.innerHTML = allBtn + rest;
+}
+function pickFilterClassType(value){
+  setLibraryFilter('classType', value);
+  closeAllCombos();
+  renderFilterClassTypeCombo();
+}
+function buildNew(){
+  if(workout.blocks.length && !confirm('Start a new class? This clears what you\'re currently building (save it first if you want to keep it).')) return;
+  workout = ensureIds(newWorkout());
+  save(); renderEditor();
+}
+function blockDuration(block){
+  const per = block.steps.reduce((sum, s) => sum + ((s.work||0) + (s.rest||0)) * (s.sets||1), 0);
+  return per * (block.rounds||1);
+}
+function totalDuration(){
+  return workout.blocks.reduce((sum, b) => sum + blockDuration(b), 0);
+}
+function fmtTime(totalSeconds){
+  totalSeconds = Math.max(0, Math.round(totalSeconds));
+  const m = Math.floor(totalSeconds/60);
+  const s = totalSeconds % 60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+function setTargetMinutes(val){
+  workout.targetMinutes = Math.max(1, parseFloat(val) || 45);
+  save(); updateTotalBar();
+}
+
+function updateTotalBar(){
+  const total = totalDuration();
+  const target = (workout.targetMinutes || 45) * 60;
+  document.getElementById('totalTime').textContent = fmtTime(total);
+  document.getElementById('totalTarget').textContent = ' / ' + fmtTime(target);
+  document.getElementById('totalBar').classList.toggle('over', total > target);
+}
+
+/* ---------------------------------------------------------
+   SCREEN SWITCHING
+--------------------------------------------------------- */
+function showScreen(which){
+  document.getElementById('tabEditor').classList.toggle('active', which==='editor');
+  document.getElementById('tabRun').classList.toggle('active', which==='run');
+  document.getElementById('tabLibrary').classList.toggle('active', which==='library');
+  document.getElementById('tabHelp').classList.toggle('active', which==='help');
+  document.getElementById('screenEditor').classList.toggle('hidden', which!=='editor');
+  document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
+  document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
+  document.getElementById('screenHelp').classList.toggle('hidden', which!=='help');
+  document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
+  if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); renderSoundSettings(); }
+  if(which==='library'){ refreshLibrary(); }
+}
+
+/* ---------------------------------------------------------
+   CLASS LIBRARY (saved to the cloud via /api/classes so any
+   device opening this same site sees the same saved classes)
+--------------------------------------------------------- */
+async function saveClass(){
+  const statusEl = document.getElementById('saveStatus');
+  if(!isValidMDY(workout.date)){
+    if(statusEl) statusEl.textContent = 'Fix the date (MM/DD/YYYY) before saving.';
+    const dateInput = document.getElementById('classDate');
+    if(dateInput) dateInput.focus();
+    return;
+  }
+  if(!workout.id) workout.id = uid();
+  if(!workout.createdBy){
+    // createdBy is locked in the first time a class is saved — this is the
+    // accountability anchor for who's allowed to delete it later. Falls back to
+    // the Instructor field if nobody's set "You are" yet.
+    workout.createdBy = getCurrentUser() || workout.instructor || 'Unknown';
+  }
+  workout.updatedAt = new Date().toISOString();
+  save();
+  if(statusEl) statusEl.textContent = 'Saving…';
+  try{
+    const res = await fetch('/api/classes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(workout)
+    });
+    if(!res.ok) throw new Error('bad status');
+    if(statusEl) statusEl.textContent = 'Saved ✓ — visible on any device under Classes';
+    const idx = library.findIndex(c => c.id === workout.id);
+    const copy = JSON.parse(JSON.stringify(workout));
+    if(idx >= 0) library[idx] = copy; else library.unshift(copy);
+  }catch(e){
+    if(statusEl) statusEl.textContent = 'Could not reach cloud storage — check connection and try again.';
+  }
+}
+
+async function refreshLibrary(){
+  const statusEl = document.getElementById('libraryStatus');
+  if(statusEl) statusEl.textContent = 'Loading…';
+  try{
+    const res = await fetch('/api/classes');
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    library = data.classes || [];
+    if(statusEl) statusEl.textContent = '';
+  }catch(e){
+    if(statusEl) statusEl.textContent = 'Could not reach cloud storage.';
+  }
+  renderLibrary();
+}
+
+let libraryFilters = { classType: '', instructor: '', keyword: '', sortDir: 'desc' };
+
+function setLibraryFilter(field, val){
+  libraryFilters[field] = val;
+  renderLibrary();
+}
+
+function toggleSortDir(){
+  libraryFilters.sortDir = libraryFilters.sortDir === 'desc' ? 'asc' : 'desc';
+  const btn = document.getElementById('sortDirBtn');
+  if(btn) btn.textContent = libraryFilters.sortDir === 'desc' ? 'Date ↓ Newest' : 'Date ↑ Oldest';
+  renderLibrary();
+}
+
+function renderLibrary(){
+  const wrap = document.getElementById('libraryList');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  if(!library.length){
+    wrap.innerHTML = '<p class="muted-note">No saved classes yet. Build one in the Build tab, then tap Save Class.</p>';
+    return;
+  }
+
+  let filtered = library.filter(cls => {
+    const type = cls.classType || cls.muscleGroup || '';
+    if(libraryFilters.classType && classTypeShortLabel(type) !== libraryFilters.classType) return false;
+    if(libraryFilters.instructor && shortInstructorName(cls.instructor || '') !== libraryFilters.instructor) return false;
+    if(libraryFilters.keyword){
+      const kw = libraryFilters.keyword.toLowerCase();
+      const haystack = [cls.name, cls.description, cls.message, type, cls.instructor].filter(Boolean).join(' ').toLowerCase();
+      if(!haystack.includes(kw)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const da = parseMDY(a.date); const db = parseMDY(b.date);
+    const ta = da ? da.getTime() : 0;
+    const tb = db ? db.getTime() : 0;
+    return libraryFilters.sortDir === 'asc' ? ta - tb : tb - ta;
+  });
+
+  if(!filtered.length){
+    wrap.innerHTML = '<p class="muted-note">No classes match those filters.</p>';
+    return;
+  }
+
+  const me = getCurrentUser();
+  filtered.forEach(cls => {
+    const type = classTypeShortLabel(cls.classType || cls.muscleGroup || '') || '—';
+    const isOwner = me && norm(shortInstructorName(cls.createdBy)) === norm(shortInstructorName(me));
+    const deleteControl = isOwner
+      ? `<button class="btn small danger" onclick="deleteClass('${cls.id}')">Delete</button>`
+      : `<span class="owner-note">Only ${escapeAttr(shortInstructorName(cls.createdBy) || 'the creator')} can delete</span>`;
+    const card = document.createElement('div');
+    card.className = 'class-card';
+    card.innerHTML = `
+      <div class="class-card-main">
+        <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
+        <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
+        <div class="class-card-meta">${escapeAttr(type)} · ${escapeAttr(shortInstructorName(cls.instructor) || '—')} · created by ${escapeAttr(shortInstructorName(cls.createdBy) || 'Unknown')}</div>
+        ${cls.description ? `<div class="class-card-desc">${escapeAttr(cls.description)}</div>` : ''}
+      </div>
+      <div class="class-card-actions">
+        <button class="btn small" onclick="loadClass('${cls.id}')">Load</button>
+        <button class="btn small ghost" onclick="duplicateClass('${cls.id}')">Duplicate</button>
+        ${deleteControl}
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+function loadClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  if(workout && workout.blocks && workout.blocks.length && !confirm('Load "' + cls.name + '"? This replaces what you\'re currently building.')) return;
+  workout = ensureIds(JSON.parse(JSON.stringify(cls)));
+  save();
+  renderEditor();
+  showScreen('editor');
+}
+
+function duplicateClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  const copy = JSON.parse(JSON.stringify(cls));
+  copy.id = uid();
+  copy.name = (copy.name || 'Untitled class') + ' (copy)';
+  copy.createdBy = ''; // a duplicate becomes a new class, owned by whoever saves it next
+  workout = ensureIds(copy);
+  save();
+  renderEditor();
+  showScreen('editor');
+}
+
+async function deleteClass(id){
+  const cls = library.find(c => c.id === id);
+  if(!cls) return;
+  const me = getCurrentUser();
+  if(!me){
+    alert('Select "You are" at the top of the app before deleting a class.');
+    return;
+  }
+  if(norm(shortInstructorName(cls.createdBy)) !== norm(shortInstructorName(me))){
+    alert('Only ' + shortInstructorName(cls.createdBy || 'the creator') + ' can delete this class.');
+    return;
+  }
+  if(!confirm('Delete "' + cls.name + '"? This cannot be undone, and will be logged.')) return;
+  try{
+    const res = await fetch('/api/classes?id=' + encodeURIComponent(id) + '&deletedBy=' + encodeURIComponent(me), { method: 'DELETE' });
+    if(!res.ok){
+      const data = await res.json().catch(() => ({}));
+      if(res.status === 403){
+        alert('Only ' + shortInstructorName(data.createdBy || 'the creator') + ' can delete this class.');
+      } else {
+        alert('Could not delete — check your connection and try again.');
+      }
+      return;
+    }
+  }catch(e){
+    alert('Could not delete — check your connection and try again.');
+    return;
+  }
+  library = library.filter(c => c.id !== id);
+  renderLibrary();
+}
+
+function norm(s){ return String(s || '').trim().toLowerCase(); }
+
+let deletionLogOpen = false;
+async function toggleDeletionLog(){
+  deletionLogOpen = !deletionLogOpen;
+  const panel = document.getElementById('deletionLogPanel');
+  if(!panel) return;
+  if(!deletionLogOpen){
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+  panel.innerHTML = '<p class="muted-note">Loading…</p>';
+  try{
+    const res = await fetch('/api/classes?log=1');
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    renderDeletionLog(data.log || []);
+  }catch(e){
+    panel.innerHTML = '<p class="muted-note">Could not load deletion history.</p>';
+  }
+}
+
+function renderDeletionLog(log){
+  const panel = document.getElementById('deletionLogPanel');
+  if(!panel) return;
+  if(!log.length){
+    panel.innerHTML = '<p class="muted-note">No classes have been deleted yet.</p>';
+    return;
+  }
+  const rows = log.map(entry => `
+    <div class="log-row">
+      <div class="log-row-main">
+        <b>${escapeAttr(entry.name || 'Untitled class')}</b>
+        <span class="muted-note">${escapeAttr(classTypeShortLabel(entry.classType || ''))}</span>
+      </div>
+      <div class="log-row-meta">
+        Created by ${escapeAttr(shortInstructorName(entry.createdBy) || 'Unknown')} · deleted by ${escapeAttr(shortInstructorName(entry.deletedBy) || 'Unknown')} on ${escapeAttr(new Date(entry.deletedAt).toLocaleString())}
+      </div>
+    </div>
+  `).join('');
+  panel.innerHTML = '<div class="log-panel-title">Deletion history</div>' + rows;
+}
+
+/* ---------------------------------------------------------
+   SOUND PROFILES & VOLUME
+   buzzerVolume is a 0–1 multiplier applied inside tone() — it
+   scales the app's own audio output and is fully independent of
+   the phone's system volume / whatever music is playing elsewhere.
+   Selecting a profile or tapping a volume level plays a preview
+   so you can dial it in before class starts.
+--------------------------------------------------------- */
+const SOUND_PROFILE_KEY = 'altarSoundProfile';
+const BUZZER_VOL_KEY    = 'altarBuzzerVol';
+
+let currentSoundProfile = 'classic';
+let currentVolLevel     = 'high';
+let buzzerVolume        = 1.0;  // set by loadSoundSettings()
+
+const SOUND_PROFILES = {
+  classic: {
+    label: 'Classic',
+    countdown(){ tone(880, 0.12, 0.3); },
+    go(){ tone(660, 0.14, 0.4, 0); tone(990, 0.22, 0.4, 0.15); },
+    rest(){ tone(440, 0.25, 0.35, 0); },
+    end(){ tone(330, 0.35, 0.4, 0); tone(220, 0.5, 0.4, 0.25); },
+  },
+  bell: {
+    label: 'Bell',
+    countdown(){ tone(1047, 0.5, 0.2); },
+    go(){ tone(784, 0.3, 0.25, 0); tone(1047, 0.5, 0.25, 0.2); },
+    rest(){ tone(659, 0.5, 0.2, 0); },
+    end(){ tone(523, 0.5, 0.25, 0); tone(392, 0.7, 0.25, 0.3); },
+  },
+  beep: {
+    label: 'Beep',
+    countdown(){ tone(1000, 0.08, 0.35); },
+    go(){ tone(1200, 0.1, 0.4, 0); tone(1200, 0.1, 0.4, 0.18); },
+    rest(){ tone(600, 0.15, 0.3, 0); },
+    end(){ tone(1200, 0.1, 0.4, 0); tone(1000, 0.1, 0.4, 0.18); tone(800, 0.2, 0.4, 0.36); },
+  },
+  off: {
+    label: 'Off',
+    countdown(){}, go(){}, rest(){}, end(){},
+  },
+};
+
+const VOLUME_LEVELS = [
+  { key: 'mute', label: '✕',    value: 0    },
+  { key: 'low',  label: 'Low',  value: 0.3  },
+  { key: 'med',  label: 'Med',  value: 0.65 },
+  { key: 'high', label: 'High', value: 1.0  },
+];
+
+function loadSoundSettings(){
+  try{
+    const p = localStorage.getItem(SOUND_PROFILE_KEY);
+    if(SOUND_PROFILES[p]) currentSoundProfile = p;
+    const v = localStorage.getItem(BUZZER_VOL_KEY);
+    const found = VOLUME_LEVELS.find(l => l.key === v);
+    if(found){ currentVolLevel = v; buzzerVolume = found.value; }
+  }catch(e){}
+}
+function saveSoundSettings(){
+  try{
+    localStorage.setItem(SOUND_PROFILE_KEY, currentSoundProfile);
+    localStorage.setItem(BUZZER_VOL_KEY, currentVolLevel);
+  }catch(e){}
+}
+function pickSoundProfile(key){
+  if(!SOUND_PROFILES[key]) return;
+  currentSoundProfile = key;
+  saveSoundSettings();
+  renderSoundSettings();
+  ensureAudio();
+  SOUND_PROFILES[key].go(); // preview
+}
+function pickVolumeLevel(key){
+  const found = VOLUME_LEVELS.find(l => l.key === key);
+  if(!found) return;
+  currentVolLevel = key;
+  buzzerVolume = found.value;
+  saveSoundSettings();
+  renderSoundSettings();
+  if(buzzerVolume > 0){ ensureAudio(); SOUND_PROFILES[currentSoundProfile].countdown(); } // preview
+}
+function renderSoundSettings(){
+  const profileWrap = document.getElementById('soundProfileToggle');
+  if(profileWrap){
+    profileWrap.innerHTML = Object.entries(SOUND_PROFILES).map(([key, p]) =>
+      `<button type="button" class="format-btn ${currentSoundProfile===key?'active':''}" onclick="pickSoundProfile('${key}')">${p.label}</button>`
+    ).join('');
+  }
+  const volWrap = document.getElementById('volumeToggle');
+  if(volWrap){
+    volWrap.innerHTML = VOLUME_LEVELS.map(l =>
+      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
+    ).join('');
+  }
+  const volQuick = document.getElementById('volQuickRow');
+  if(volQuick){
+    volQuick.innerHTML = VOLUME_LEVELS.map(l =>
+      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
+    ).join('');
+  }
+}
+
+/* ---------------------------------------------------------
+   RUNNER
+--------------------------------------------------------- */
+let sequence = [];   // flattened list of {blockName, blockIndex, roundIndex, roundsTotal, label, type, seconds}
+let seqIndex = 0;
+let remaining = 0;
+let running = false;
+let tickHandle = null;
+let audioCtx = null;
+let wakeLock = null;
+let runSubMode = null; // 'music' | 'time' — only meaningful when classFormatMode is 'mixed'
+
+/* ---------------------------------------------------------
+   RUN MODE SETUP — decides whether Run Class shows the normal
+   timer UI, a no-timer song list (SYNC/ECHO classes), or a
+   SYNC/IRON toggle between the two (SYNC 30 x IRON 30).
+--------------------------------------------------------- */
+function setupRunModeUI(){
+  const mode = classFormatMode(workout.classType);
+  const toggle = document.getElementById('runSubModeToggle');
+  const musicView = document.getElementById('runMusicView');
+  const setup = document.getElementById('runSetup');
+  const active = document.getElementById('runActive');
+
+  if(mode === 'music'){
+    toggle.classList.add('hidden');
+    setup.classList.add('hidden');
+    active.classList.add('hidden');
+    musicView.classList.remove('hidden');
+    renderSongListView(null);
+    return;
+  }
+
+  if(mode === 'mixed'){
+    toggle.classList.remove('hidden');
+    if(runSubMode !== 'music' && runSubMode !== 'time'){
+      runSubMode = workout.blocks.some(b => (b.format||'time') === 'music') ? 'music' : 'time';
+    }
+    const syncBtn = document.getElementById('subModeSyncBtn');
+    const ironBtn = document.getElementById('subModeIronBtn');
+    if(syncBtn) syncBtn.classList.toggle('active', runSubMode === 'music');
+    if(ironBtn) ironBtn.classList.toggle('active', runSubMode === 'time');
+
+    if(runSubMode === 'music'){
+      setup.classList.add('hidden');
+      active.classList.add('hidden');
+      musicView.classList.remove('hidden');
+      renderSongListView('music');
+    } else {
+      musicView.classList.add('hidden');
+      if(!running && seqIndex === 0){ setup.classList.remove('hidden'); active.classList.add('hidden'); }
+    }
+    return;
+  }
+
+  // mode === 'time' — normal behavior, nothing new to show/hide here
+  toggle.classList.add('hidden');
+  musicView.classList.add('hidden');
+}
+
+function setRunSubMode(m){
+  if(running){
+    if(!confirm('Switch views? This will stop the current timer.')) return;
+    stopRun();
+  }
+  runSubMode = m;
+  setupRunModeUI();
+}
+
+function renderSongListView(formatFilter){
+  const wrap = document.getElementById('runMusicView');
+  if(!wrap) return;
+  const blocks = workout.blocks.filter(b => !formatFilter || (b.format||'time') === formatFilter);
+  if(!blocks.length || !blocks.some(b => b.steps.some(s => s.song || s.bpm || s.focus))){
+    wrap.innerHTML = '<p class="muted-note" style="text-align:center;">Add songs to this class in the Build tab.</p>';
+    return;
+  }
+  wrap.innerHTML = blocks.map(block => {
+    const rows = block.steps.map(s => `
+      <div class="song-row">
+        <span class="song-bpm">${escapeAttr(s.bpm || '—')}</span>
+        <span class="song-title">${escapeAttr(s.song || 'Untitled')}</span>
+        <span class="song-focus">${escapeAttr(s.focus || '')}</span>
+      </div>
+    `).join('');
+    return `<div class="song-block"><div class="song-block-name">${escapeAttr(block.name)}</div>${rows}</div>`;
+  }).join('');
+}
+
+function buildSequence(formatFilter){
+  const seq = [];
+  workout.blocks.forEach((block, bi) => {
+    if(formatFilter && (block.format || 'time') !== formatFilter) return;
+    const rounds = block.rounds || 1;
+    for(let r=0; r<rounds; r++){
+      block.steps.forEach((step) => {
+        const setsTotal = step.sets || 1;
+        for(let s=0; s<setsTotal; s++){
+          const base = { blockName: block.name, blockIndex: bi, roundIndex: r+1, roundsTotal: rounds,
+            setIndex: s+1, setsTotal: setsTotal };
+          if((step.work||0) > 0){
+            seq.push({ ...base, label: step.label || 'Movement', type: 'work', seconds: step.work });
+          }
+          if((step.rest||0) > 0){
+            seq.push({ ...base, label: 'Rest', type: 'rest', seconds: step.rest });
+          }
+        }
+      });
+    }
+  });
+  return seq;
+}
+
+function prepareRunSummary(){
+  const seq = buildSequence('time');
+  document.getElementById('runSummary').textContent = seq.length
+    ? `${workout.name} — ${seq.length} timed segments, ${fmtTime(totalDuration())} total. Tap Start when you're ready.`
+    : 'Add at least one movement in the Build tab before starting.';
+}
+
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq, duration, vol, delay){
+  if(!audioCtx || buzzerVolume === 0) return;
+  const t0 = audioCtx.currentTime + (delay||0);
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime((vol||0.35) * buzzerVolume, t0 + 0.02);
+  gain.gain.linearRampToValueAtTime(0, t0 + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0 + duration + 0.02);
+}
+function beepCountdown(){ if(audioCtx) SOUND_PROFILES[currentSoundProfile].countdown(); }
+function buzzGo(){        if(audioCtx) SOUND_PROFILES[currentSoundProfile].go(); }
+function buzzRest(){      if(audioCtx) SOUND_PROFILES[currentSoundProfile].rest(); }
+function buzzEnd(){       if(audioCtx) SOUND_PROFILES[currentSoundProfile].end(); }
+
+async function requestWake(){
+  try{
+    if('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); }
+  }catch(e){ /* ignore */ }
+}
+function releaseWake(){
+  try{ if(wakeLock){ wakeLock.release(); wakeLock = null; } }catch(e){}
+}
+
+function startRun(){
+  sequence = buildSequence('time');
+  if(sequence.length === 0){ alert('Add movements in the Build tab first.'); return; }
+  ensureAudio();
+  requestWake();
+  seqIndex = 0;
+  remaining = sequence[0].seconds;
+  running = true;
+  document.getElementById('runSetup').classList.add('hidden');
+  document.getElementById('runActive').classList.remove('hidden');
+  document.getElementById('totalBar').classList.add('hidden');
+  populateJumpSelect();
+  buzzGo();
+  renderRunFrame();
+  tickHandle = setInterval(tick, 1000);
+  updatePauseVisual();
+}
+
+function populateJumpSelect(){
+  const sel = document.getElementById('jumpSelect');
+  sel.innerHTML = '<option value="">Jump to block…</option>';
+  let lastBlockIndex = null;
+  sequence.forEach((step, i) => {
+    if(step.blockIndex !== lastBlockIndex){
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = step.blockName;
+      sel.appendChild(opt);
+      lastBlockIndex = step.blockIndex;
+    }
+  });
+}
+
+function onJumpSelect(val){
+  if(val === '') return;
+  jumpToIndex(parseInt(val));
+  document.getElementById('jumpSelect').value = '';
+}
+
+function jumpToIndex(i){
+  if(i < 0 || i >= sequence.length) return;
+  seqIndex = i;
+  remaining = sequence[seqIndex].seconds;
+  renderRunFrame();
+}
+
+function restartRun(){
+  if(sequence.length === 0) return;
+  if(!confirm('Restart this class from the beginning?')) return;
+  clearInterval(tickHandle);
+  seqIndex = 0;
+  remaining = sequence[0].seconds;
+  running = true;
+  ensureAudio();
+  buzzGo();
+  renderRunFrame();
+  tickHandle = setInterval(tick, 1000);
+  updatePauseVisual();
+}
+
+function currentStep(){ return sequence[seqIndex]; }
+
+function renderRunFrame(){
+  const step = currentStep();
+  if(!step) return;
+  let line = `${step.blockName} · Round ${step.roundIndex} of ${step.roundsTotal}`;
+  if(step.setsTotal && step.setsTotal > 1){ line += ` · Set ${step.setIndex} of ${step.setsTotal}`; }
+  line += ` · Step ${seqIndex+1} of ${sequence.length}`;
+  document.getElementById('progressLine').textContent = line;
+  const pill = document.getElementById('typePill');
+  pill.textContent = step.type === 'work' ? 'WORK' : 'REST';
+  pill.className = 'type-pill ' + step.type;
+  document.getElementById('movementName').textContent = step.type === 'rest' ? 'Rest' : step.label;
+  const timerEl = document.getElementById('timerDisplay');
+  timerEl.className = 'timer ' + step.type + (remaining<=3 ? ' warn' : '');
+  timerEl.textContent = fmtTime(remaining);
+
+  renderPlaylist();
+}
+
+/* ---------------------------------------------------------
+   MESSAGE / INSPO DRAWER (Run Class page)
+--------------------------------------------------------- */
+let messageDrawerOpen = false;
+function toggleMessageDrawer(){
+  messageDrawerOpen = !messageDrawerOpen;
+  renderMessageDrawer();
+}
+function renderMessageDrawer(){
+  const content = document.getElementById('messageDrawerContent');
+  const chevron = document.getElementById('messageDrawerChevron');
+  if(!content) return;
+  content.classList.toggle('hidden', !messageDrawerOpen);
+  if(chevron) chevron.textContent = messageDrawerOpen ? '▴' : '▾';
+  if(messageDrawerOpen){
+    content.innerHTML = (workout.message && workout.message.trim())
+      ? workout.message
+      : '<p class="muted-note">No message added for this class.</p>';
+  }
+}
+
+/* ---------------------------------------------------------
+   PLAYLIST — active movement + scrolling upcoming queue.
+   Tap any row to jump straight to that movement.
+--------------------------------------------------------- */
+function renderPlaylist(){
+  const wrap = document.getElementById('playlistScroll');
+  if(!wrap) return;
+
+  // "Active" is the most recent work entry at-or-before the current position —
+  // during a rest, the movement you're resting from is still "Now Playing" until
+  // the next movement's work segment actually starts. Up Next only lists what's
+  // strictly after that.
+  let activeSeqIdx = -1;
+  for(let i = 0; i <= seqIndex && i < sequence.length; i++){
+    if(sequence[i].type === 'work') activeSeqIdx = i;
+  }
+
+  wrap.innerHTML = '';
+  let shown = 0;
+  sequence.forEach((step, i) => {
+    if(step.type !== 'work' || i <= activeSeqIdx) return;
+    shown++;
+    const row = document.createElement('div');
+    row.className = 'playlist-row upcoming';
+    let meta = step.blockName || '';
+    if(step.roundsTotal > 1) meta += ' · Round ' + step.roundIndex + '/' + step.roundsTotal;
+    if(step.setsTotal > 1) meta += ' · Set ' + step.setIndex + '/' + step.setsTotal;
+    row.innerHTML = `
+      <span class="playlist-row-label">${escapeAttr(step.label)}</span>
+      <span class="playlist-row-meta">${escapeAttr(meta)}</span>
+    `;
+    row.onclick = () => jumpToIndex(i);
+    wrap.appendChild(row);
+  });
+
+  if(shown === 0){
+    wrap.innerHTML = '<p class="muted-note" style="padding:8px 6px;">That\'s the last one — nothing queued up after this.</p>';
+  }
+}
+
+function tick(){
+  if(!running) return;
+  remaining -= 1;
+  if(remaining <= 3 && remaining > 0){ beepCountdown(); }
+  if(remaining <= 0){
+    advance();
+    return;
+  }
+  renderRunFrame();
+}
+
+function advance(){
+  seqIndex += 1;
+  if(seqIndex >= sequence.length){
+    finishRun();
+    return;
+  }
+  const step = currentStep();
+  remaining = step.seconds;
+  if(step.type === 'work') buzzGo(); else buzzRest();
+  renderRunFrame();
+}
+
+function finishRun(){
+  clearInterval(tickHandle);
+  running = false;
+  buzzEnd();
+  document.getElementById('movementName').textContent = 'Class complete';
+  document.getElementById('progressLine').textContent = 'Nice work.';
+  document.getElementById('timerDisplay').textContent = '0:00';
+  const playlistScroll = document.getElementById('playlistScroll');
+  if(playlistScroll) playlistScroll.innerHTML = '<p class="muted-note" style="padding:8px 6px;">Class complete — nothing queued up.</p>';
+  updatePauseVisual();
+  releaseWake();
+}
+
+function togglePause(){
+  if(seqIndex >= sequence.length){ startRun(); return; }
+  running = !running;
+  updatePauseVisual();
+  if(running){ ensureAudio(); }
+}
+
+function skip(dir){
+  let idx = seqIndex + dir;
+  if(idx < 0) idx = 0;
+  if(idx >= sequence.length){ finishRun(); return; }
+  seqIndex = idx;
+  remaining = sequence[seqIndex].seconds;
+  renderRunFrame();
+}
+
+function addTime(sec){
+  remaining = Math.max(0, remaining + sec);
+  renderRunFrame();
+}
+
+function updatePauseVisual(){
+  const timerEl = document.getElementById('timerDisplay');
+  if(timerEl) timerEl.classList.toggle('paused', !running);
+  const pill = document.getElementById('typePill');
+  if(!pill) return;
+  if(!running && seqIndex < sequence.length){
+    pill.textContent = 'PAUSED';
+    pill.className = 'type-pill rest';
+  } else {
+    const step = currentStep();
+    if(step){
+      pill.textContent = step.type === 'work' ? 'WORK' : 'REST';
+      pill.className = 'type-pill ' + step.type;
+    }
+  }
+}
+
+function stopRun(){
+  clearInterval(tickHandle);
+  running = false;
+  releaseWake();
+  document.getElementById('runActive').classList.add('hidden');
+  document.getElementById('runSetup').classList.remove('hidden');
+  prepareRunSummary();
+}
+function endRun(){
+  if(!confirm('End this class run?')) return;
+  stopRun();
+}
+
+/* ---------------------------------------------------------
+   INIT
+--------------------------------------------------------- */
+(async function init(){
+  loadSoundSettings();
+  populateStaticOptions();
+  const whoamiInput = document.getElementById('whoamiInput');
+  // Normalize a legacy full-name "You are" value to the short form once, so
+  // it displays consistently and matches future short-form createdBy values.
+  const rawUser = getCurrentUser();
+  const shortUser = shortInstructorName(rawUser);
+  if(rawUser && shortUser !== rawUser) setCurrentUser(shortUser);
+  if(whoamiInput) whoamiInput.value = shortUser;
+  const localDraft = load();
+  await refreshLibrary(); // populates `library` from the cloud before deciding what to show
+
+  let mostRecentCloud = null;
+  if(library.length){
+    const sortKey = (c) => c.updatedAt || (parseMDY(c.date) ? parseMDY(c.date).toISOString() : '');
+    mostRecentCloud = [...library].sort((a,b) => sortKey(b).localeCompare(sortKey(a)))[0];
+  }
+
+  if(localDraft && mostRecentCloud){
+    // Prefer whichever was actually edited more recently — this device's in-progress
+    // draft, or a class saved from a different device — so a phone that's never been
+    // used to build a class doesn't fall back to the old built-in sample.
+    const localTime = localDraft.updatedAt || '';
+    const cloudTime = mostRecentCloud.updatedAt || '';
+    workout = ensureIds(cloudTime > localTime ? JSON.parse(JSON.stringify(mostRecentCloud)) : localDraft);
+  } else if(mostRecentCloud){
+    workout = ensureIds(JSON.parse(JSON.stringify(mostRecentCloud)));
+  } else if(localDraft && localDraft.blocks && localDraft.blocks.length){
+    workout = ensureIds(localDraft);
+  } else {
+    // First-ever open on this device, nothing saved anywhere yet — start from a
+    // clean blank class (today's date, everything else empty), not the sample.
+    workout = ensureIds(newWorkout());
+  }
+  save();
+  renderEditor();
+  showScreen('editor');
+})();
+</script>
+</body>
+</html>
