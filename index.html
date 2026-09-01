@@ -571,11 +571,7 @@
     </div>
   </header>
 
-  <div class="whoami-bar">
-    <span class="whoami-label">You are:</span>
-    <span class="whoami-name" id="whoamiName">—</span>
-    <button class="whoami-switch" onclick="showLoginOverlay()">Switch</button>
-  </div>
+  <span id="whoamiName" style="display:none"></span>
 
   <!-- PROFILE MODAL -->
 
@@ -583,8 +579,8 @@
     <!-- EDITOR -->
     <div id="screenEditor">
       <div id="readonlyBanner" class="readonly-banner hidden">
-        <p><strong id="readonlyOwnerName"></strong> built this class. Duplicate it to make your own editable copy.</p>
         <button class="btn small" onclick="duplicateCurrentWorkout()">Duplicate to Edit</button>
+        <span id="readonlyOwnerName" style="display:none"></span>
       </div>
       <div class="title-row">
         <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
