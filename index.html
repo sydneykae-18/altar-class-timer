@@ -27,12 +27,24 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:var(--sans); overflow-x:hidden; max-width:100vw;
     -webkit-tap-highlight-color:transparent; overscroll-behavior:none; height:100%;}
-  /* Icon placeholder slots — replace contents with your SVGs */
+  /* Icon placeholder slots — replace contents with your SVGs.
+     Fallback text keeps buttons usable until custom icons arrive. */
   .icon{display:inline-flex; align-items:center; justify-content:center;
-    width:1em; height:1em; vertical-align:middle; flex-shrink:0;}
+    width:1em; height:1em; vertical-align:middle; flex-shrink:0; line-height:1;}
   .drawer-item .icon{width:20px; height:20px;}
   .hamburger-btn .icon{width:22px; height:22px;}
   .arrow-btn .icon{width:18px; height:18px;}
+  /* Text fallbacks — remove these once your SVGs are in place */
+  .icon-menu::before    { content:'≡'; font-size:1.2em; }
+  .icon-close::before   { content:'×'; font-size:1.1em; }
+  .icon-drag::before    { content:'⋮'; font-size:1em; letter-spacing:-2px; }
+  .icon-prev::before    { content:'‹'; font-size:1.3em; }
+  .icon-next::before    { content:'›'; font-size:1.3em; }
+  .icon-build::before   { content:'+'; font-size:1.1em; }
+  .icon-classes::before { content:'≡'; font-size:1em; }
+  .icon-help::before    { content:'?'; font-size:1em; font-weight:700; }
+  .icon-profile::before { content:'○'; font-size:0.9em; }
+  .icon-settings::before{ content:'◈'; font-size:0.9em; }
   input, select, textarea{ font-size:16px; }
   #app{min-height:100%; display:flex; flex-direction:column;}
 
@@ -237,10 +249,8 @@
 
   /* ---- MOBILE BUILD IMPROVEMENTS ---- */
   @media (max-width:560px){
-    /* Stack title row: name full-width, buttons below */
+    /* Title row: name full-width */
     .title-row{flex-direction:column; align-items:stretch; gap:8px;}
-    .title-row-actions{display:flex; gap:8px;}
-    .title-row-actions .btn{flex:1;}
     /* Hide Indent/Outdent from RTE toolbar — too fiddly on mobile */
     .rte-indent-btn{display:none;}
     /* Two-row step layout: label full-width top, numbers below */
@@ -526,7 +536,7 @@
     <button class="drawer-run-btn" onclick="drawerGo('run')">Run Class</button>
   </div>
   <div class="drawer-section">
-    <button class="drawer-item" id="drawerItemEditor" onclick="drawerGo('editor')">
+    <button class="drawer-item" id="drawerItemEditor" onclick="drawerBuildNew()">
       <span class="drawer-icon"><span class="icon icon-build"></span></span> Build
     </button>
     <button class="drawer-item" id="drawerItemLibrary" onclick="drawerGo('library')">
@@ -537,7 +547,7 @@
     </button>
   </div>
   <div class="drawer-section">
-    <button class="drawer-item" onclick="openProfileFromDrawer()">
+    <button class="drawer-item" id="drawerItemProfile" onclick="drawerGo('profile')">
       <span class="drawer-icon"><span class="icon icon-profile"></span></span> Profile
     </button>
     <button class="drawer-item" onclick="openAdminFromDrawer()">
@@ -568,21 +578,6 @@
   </div>
 
   <!-- PROFILE MODAL -->
-  <div id="profileModal" class="modal-overlay hidden" onclick="if(event.target===this) closeProfileModal()">
-    <div class="modal-box">
-      <h3 id="profileModalName" style="font-family:var(--serif); font-weight:400;"></h3>
-      <p style="font-size:13px; color:var(--muted); margin:0;">Change your PIN</p>
-      <input type="password" id="profileCurrentPin" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off">
-      <input type="password" id="profileNewPin"     inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off">
-      <input type="password" id="profileConfirmPin" inputmode="numeric" maxlength="4" placeholder="Confirm new PIN" autocomplete="off"
-        onkeydown="if(event.key==='Enter') saveProfilePin()">
-      <div class="modal-err" id="profilePinErr"></div>
-      <div class="modal-btns">
-        <button class="btn primary" style="flex:1" onclick="saveProfilePin()">Save PIN</button>
-        <button class="btn ghost" onclick="closeProfileModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
 
   <main>
     <!-- EDITOR -->
@@ -593,10 +588,6 @@
       </div>
       <div class="title-row">
         <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
-        <div class="title-row-actions">
-          <button class="btn good" onclick="saveClass()">Save Class</button>
-          <button class="btn danger ghost" onclick="buildNew()">Build New</button>
-        </div>
       </div>
       <div class="save-status-row"><span class="save-status" id="saveStatus"></span></div>
 
@@ -850,6 +841,43 @@
       </div>
     </div>
 
+    <!-- PROFILE SCREEN -->
+    <div id="screenProfile" class="hidden">
+      <div class="help-section">
+        <h2 id="profileScreenName" style="font-family:var(--serif); font-weight:400; font-size:22px;"></h2>
+        <p style="color:var(--muted); font-size:13px; margin:0 0 20px;">Logged in on this device</p>
+      </div>
+
+      <div class="admin-section">
+        <h2>Update Name</h2>
+        <p style="font-size:13px; color:var(--muted); margin:0 0 12px;">Changes how your name appears across all classes. Updates your login name on this device.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="profileNameInput" placeholder="Your name" style="flex:1; min-width:160px; background:var(--panel2); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:10px; font-size:16px;">
+          <button class="btn good" onclick="saveProfileName()">Save Name</button>
+        </div>
+        <div class="modal-err" id="profileNameErr" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="admin-section">
+        <h2>Change PIN</h2>
+        <input type="password" id="profileCurrentPin" inputmode="numeric" maxlength="4" placeholder="Current PIN" autocomplete="off"
+          style="background:var(--panel2); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:10px; font-size:16px; width:100%; margin-bottom:8px;">
+        <input type="password" id="profileNewPin" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"
+          style="background:var(--panel2); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:10px; font-size:16px; width:100%; margin-bottom:8px;">
+        <input type="password" id="profileConfirmPin" inputmode="numeric" maxlength="4" placeholder="Confirm new PIN" autocomplete="off"
+          onkeydown="if(event.key==='Enter') saveProfilePin()"
+          style="background:var(--panel2); border:1px solid var(--line); color:var(--text); padding:10px 14px; border-radius:10px; font-size:16px; width:100%; margin-bottom:8px;">
+        <div class="modal-err" id="profilePinErr" style="margin-bottom:8px;"></div>
+        <button class="btn good" style="width:100%" onclick="saveProfilePin()">Save PIN</button>
+      </div>
+
+      <div class="admin-section">
+        <h2>Switch Account</h2>
+        <p style="font-size:13px; color:var(--muted); margin:0 0 12px;">Log out and return to the instructor selection screen.</p>
+        <button class="btn danger ghost" style="width:100%" onclick="profileSwitchAccount()">Switch Account</button>
+      </div>
+    </div>
+
   </main>
 
   <div class="total-bar" id="totalBar">
@@ -956,6 +984,14 @@ function closeDrawer(){
 function drawerGo(screen){
   closeDrawer();
   showScreen(screen);
+}
+function drawerBuildNew(){
+  closeDrawer();
+  // Start a fresh class immediately — no confirm prompt from the drawer
+  workout = ensureIds(newWorkout());
+  save();
+  renderEditor();
+  showScreen('editor');
 }
 function openProfileFromDrawer(){
   closeDrawer();
@@ -1135,19 +1171,42 @@ async function renderAdminDeletionLog(){
 /* ---------------------------------------------------------
    PROFILE MODAL — user changes their own PIN
 --------------------------------------------------------- */
-function openProfileModal(){
+function renderProfileScreen(){
   const user = getCurrentUser();
-  if(!user){ alert('Log in first to manage your profile.'); return; }
-  document.getElementById('profileModalName').textContent = user;
+  if(!user){ showScreen('editor'); showLoginOverlay(); return; }
+  const nameEl = document.getElementById('profileScreenName');
+  if(nameEl) nameEl.textContent = user;
+  const nameInput = document.getElementById('profileNameInput');
+  if(nameInput) nameInput.value = user;
   document.getElementById('profileCurrentPin').value = '';
   document.getElementById('profileNewPin').value = '';
   document.getElementById('profileConfirmPin').value = '';
   document.getElementById('profilePinErr').textContent = '';
-  document.getElementById('profileModal').classList.remove('hidden');
-  setTimeout(() => document.getElementById('profileCurrentPin').focus(), 100);
+  document.getElementById('profileNameErr').textContent = '';
 }
-function closeProfileModal(){
-  document.getElementById('profileModal').classList.add('hidden');
+function saveProfileName(){
+  const user = getCurrentUser();
+  const newName = document.getElementById('profileNameInput').value.trim();
+  const errEl = document.getElementById('profileNameErr');
+  if(!newName){ errEl.textContent = 'Name cannot be empty.'; return; }
+  if(newName === user){ errEl.textContent = 'That\'s already your name.'; return; }
+  // Update instructor list
+  const instructors = getInstructorList() || [];
+  const idx = instructors.indexOf(user);
+  if(idx !== -1) instructors[idx] = newName;
+  else instructors.push(newName);
+  localStorage.setItem(INSTRUCTORS_KEY, JSON.stringify(instructors));
+  // Move PIN to new key
+  const pin = getPinFor(user);
+  setPinFor(newName, pin);
+  // Update current user
+  setCurrentUser(newName);
+  // Update drawer name
+  const drawerEl = document.getElementById('drawerUserName');
+  if(drawerEl) drawerEl.textContent = newName;
+  errEl.style.color = 'var(--accent)';
+  errEl.textContent = 'Name updated!';
+  document.getElementById('profileScreenName').textContent = newName;
 }
 function saveProfilePin(){
   const user    = getCurrentUser();
@@ -1155,7 +1214,7 @@ function saveProfilePin(){
   const newPin  = document.getElementById('profileNewPin').value.trim();
   const confirm = document.getElementById('profileConfirmPin').value.trim();
   const errEl   = document.getElementById('profilePinErr');
-
+  errEl.style.color = '';
   if(current !== getPinFor(user)){
     errEl.textContent = 'Current PIN is incorrect.'; return;
   }
@@ -1166,9 +1225,21 @@ function saveProfilePin(){
     errEl.textContent = 'PINs don\'t match.'; return;
   }
   setPinFor(user, newPin);
-  closeProfileModal();
-  alert('PIN updated!');
+  document.getElementById('profileCurrentPin').value = '';
+  document.getElementById('profileNewPin').value = '';
+  document.getElementById('profileConfirmPin').value = '';
+  errEl.style.color = 'var(--accent)';
+  errEl.textContent = 'PIN updated!';
 }
+function profileSwitchAccount(){
+  setCurrentUser('');
+  showScreen('editor');
+  showLoginOverlay();
+}
+// Keep old references working
+function openProfileModal(){ showScreen('profile'); }
+function closeProfileModal(){ showScreen('editor'); }
+function openProfileFromDrawer(){ drawerGo('profile'); }
 
 function uid(){ return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
@@ -1844,7 +1915,7 @@ function updateTotalBar(){
 function showScreen(which){
   _currentScreen = which;
   // Update drawer active states
-  ['Editor','Library','Help'].forEach(s => {
+  ['Editor','Library','Help','Profile'].forEach(s => {
     const el = document.getElementById('drawerItem' + s);
     if(el) el.classList.toggle('active-screen', which === s.toLowerCase());
   });
@@ -1853,11 +1924,13 @@ function showScreen(which){
   document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
   document.getElementById('screenHelp').classList.toggle('hidden', which!=='help');
   document.getElementById('screenAdmin').classList.toggle('hidden', which!=='admin');
+  document.getElementById('screenProfile').classList.toggle('hidden', which!=='profile');
   document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
   document.getElementById('bottomActionBar').classList.toggle('hidden', which!=='editor');
   if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); renderSoundSettings(); }
   if(which==='library'){ refreshLibrary(); }
   if(which==='admin'){ renderAdminScreen(); }
+  if(which==='profile'){ renderProfileScreen(); }
 }
 
 /* ---------------------------------------------------------
