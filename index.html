@@ -64,7 +64,7 @@
   .tabs{display:none;}
   .tab{display:none;}
 
-  main{flex:1; padding:16px; padding-bottom:max(80px, calc(env(safe-area-inset-bottom) + 72px));
+  main{flex:1; padding:10px 16px 16px; padding-bottom:max(80px, calc(env(safe-area-inset-bottom) + 72px));
     max-width:720px; margin:0 auto; width:100%;}
   .hidden{display:none !important;}
 
@@ -171,39 +171,20 @@
     font-size:13px; line-height:1; position:relative;}
   .btn.icon-btn::after{content:''; position:absolute; inset:-7px;}
 
-  .title-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:4px;}
+  .title-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:2px;}
   .workout-name{flex:1 1 220px; min-width:0; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
     color:var(--text); border-bottom:1px dashed var(--line); padding:8px 2px;}
   .workout-name:focus{outline:none; border-bottom-color:var(--accent);}
   .workout-name::placeholder{font-size:15px; font-family:var(--sans); color:var(--muted);}
   .title-row-actions{display:flex; gap:8px; flex:0 0 auto;}
-  .save-status-row{min-height:16px; margin-bottom:12px;}
+  .save-status-row{min-height:14px; margin-bottom:6px;}
 
   /* Read-only editor state */
   .readonly-banner{background:var(--panel); border:1px solid var(--line); border-radius:14px;
     padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .readonly-banner p{margin:0; font-size:13px; color:var(--muted); flex:1 1 200px;}
   .readonly-banner strong{color:var(--text);}
-  #screenEditor.editor-readonly .workout-name,
-  #screenEditor.editor-readonly .meta-field input,
-  #screenEditor.editor-readonly .meta-field textarea,
-  #screenEditor.editor-readonly .meta-field select,
-  #screenEditor.editor-readonly #classMessage,
-  #screenEditor.editor-readonly .block-head input,
-  #screenEditor.editor-readonly .block-head select,
-  #screenEditor.editor-readonly .step input,
-  #screenEditor.editor-readonly .combo-display,
-  #screenEditor.editor-readonly .format-btn,
-  #screenEditor.editor-readonly .add-step-btn,
-  #screenEditor.editor-readonly .remove-block,
-  #screenEditor.editor-readonly .remove-step,
-  #screenEditor.editor-readonly .block-drag-handle,
-  #screenEditor.editor-readonly .step-drag-handle,
-  #screenEditor.editor-readonly #toolbarTop button,
-  #screenEditor.editor-readonly #toolbarBottom button,
-  #screenEditor.editor-readonly input[id="targetMinutes"]
-  { pointer-events:none; opacity:0.45; }
-  #screenEditor.editor-readonly .btn.good{ pointer-events:none; opacity:0.35; }
+  /* editor-readonly class no longer blocks editing — kept empty for legacy compat */
 
   .block{background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:16px; margin-bottom:14px; transition:box-shadow .15s;}
   .block-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
@@ -1475,20 +1456,22 @@ function canEditWorkout(){
   if(!workout) return true;
   if(!workout.createdBy) return true;
   const user = getCurrentUser();
-  return workout.createdBy === user || shortInstructorName(workout.createdBy) === user;
+  if(!user) return true; // not logged in — allow, Save will set owner
+  const norm = s => (s||'').trim().toLowerCase();
+  return norm(workout.createdBy) === norm(user)
+      || norm(shortInstructorName(workout.createdBy)) === norm(user)
+      || norm(workout.createdBy) === norm(shortInstructorName(user))
+      || norm(shortInstructorName(workout.createdBy)) === norm(shortInstructorName(user));
 }
 function applyEditorPermissions(){
-  const screen = document.getElementById('screenEditor');
-  const banner = document.getElementById('readonlyBanner');
-  const ownerEl = document.getElementById('readonlyOwnerName');
-  if(!screen || !banner) return;
+  // Everyone can always edit — ownership only affects Save button label
   const editable = canEditWorkout();
-  screen.classList.toggle('editor-readonly', !editable);
-  banner.classList.toggle('hidden', editable);
-  if(!editable && ownerEl) ownerEl.textContent = workout.createdBy || 'Another instructor';
-  // Dim Save in sticky bar when readonly
   const saveBtn = document.querySelector('#bottomActionBar .btn.good');
-  if(saveBtn){ saveBtn.style.opacity = editable ? '' : '0.4'; saveBtn.style.pointerEvents = editable ? '' : 'none'; }
+  if(saveBtn){
+    saveBtn.textContent = editable ? 'Save Class' : 'Save as New';
+    saveBtn.style.opacity = '';
+    saveBtn.style.pointerEvents = '';
+  }
 }
 function duplicateCurrentWorkout(){
   if(!workout) return;
@@ -1932,12 +1915,14 @@ function showScreen(which){
    device opening this same site sees the same saved classes)
 --------------------------------------------------------- */
 async function saveClass(){
-  if(!canEditWorkout()){
-    const statusEl = document.getElementById('saveStatus');
-    if(statusEl) statusEl.textContent = 'This class belongs to ' + (workout.createdBy || 'another instructor') + '. Duplicate it to save your own version.';
-    return;
-  }
   const statusEl = document.getElementById('saveStatus');
+  if(!canEditWorkout()){
+    // Non-owner: fork to a new class owned by the current user
+    workout.id = uid();
+    workout.createdBy = getCurrentUser() || workout.instructor || 'Unknown';
+    save();
+    applyEditorPermissions(); // flip button back to "Save Class"
+  }
   if(!isValidMDY(workout.date)){
     if(statusEl) statusEl.textContent = 'Fix the date (MM/DD/YYYY) before saving.';
     const dateInput = document.getElementById('classDate');
