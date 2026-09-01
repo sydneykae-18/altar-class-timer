@@ -6,45 +6,73 @@
 <title>Altar Class Timer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
+  /* ---- ALTAR BRAND PALETTE ---- */
   :root{
-    --bg:#0a0a0a;
-    --panel:#151515;
-    --panel2:#1c1c1c;
-    --line:#2c2c2c;
-    --text:#fafafa;
-    --muted:#8f8f8f;
-    --work:#fafafa;
-    --rest:#8f8f8f;
-    --accent:#fafafa;
-    --good:#fafafa;
-    --danger:#e8b4a0;
-    --serif:"Gloock", Georgia, "Times New Roman", serif;
+    --bg:#0B0B0A;
+    --panel:#1A1A18;
+    --panel2:#242421;
+    --line:#2E2E2B;
+    --text:#F7F6F2;
+    --text2:#D8CCBA;
+    --muted:#A7A49D;
+    --accent:#687C60;
+    --sand:#D8CCBA;
+    --gold:#D6B77A;
+    --work:#F7F6F2;
+    --rest:#A7A49D;
+    --good:#687C60;
+    --danger:#C0695A;
+    --serif:"Cormorant Garamond", Georgia, "Times New Roman", serif;
     --sans:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --display:"Bebas Neue", Impact, sans-serif;
+  }
+  @media(prefers-color-scheme:light){
+    :root{
+      --bg:#F7F6F2;
+      --panel:#FFFFFF;
+      --panel2:#EDE9E3;
+      --line:#D8CCBA;
+      --text:#0B0B0A;
+      --text2:#3D3C39;
+      --muted:#A7A49D;
+      --accent:#687C60;
+      --sand:#D8CCBA;
+      --gold:#D6B77A;
+      --work:#0B0B0A;
+      --rest:#A7A49D;
+      --good:#687C60;
+      --danger:#B5503E;
+    }
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:var(--sans); overflow-x:hidden; max-width:100vw;
     -webkit-tap-highlight-color:transparent; overscroll-behavior:none; height:100%;}
-  /* Icon placeholder slots — replace contents with your SVGs.
-     Fallback text keeps buttons usable until custom icons arrive. */
-  .icon{display:inline-flex; align-items:center; justify-content:center;
-    width:1em; height:1em; vertical-align:middle; flex-shrink:0; line-height:1;}
+  /* Icon system — SVG masks inherit currentColor */
+  .icon{display:inline-block; width:1em; height:1em; vertical-align:middle;
+    flex-shrink:0; background-color:currentColor;
+    -webkit-mask-size:contain; mask-size:contain;
+    -webkit-mask-position:center; mask-position:center;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;}
   .drawer-item .icon{width:20px; height:20px;}
   .hamburger-btn .icon{width:22px; height:22px;}
   .arrow-btn .icon{width:18px; height:18px;}
-  /* Text fallbacks — remove these once your SVGs are in place */
-  .icon-menu::before    { content:'≡'; font-size:1.2em; }
-  .icon-close::before   { content:'×'; font-size:1.1em; }
-  .icon-drag::before    { content:'⋮'; font-size:1em; letter-spacing:-2px; }
-  .icon-prev::before    { content:'‹'; font-size:1.3em; }
-  .icon-next::before    { content:'›'; font-size:1.3em; }
-  .icon-build::before   { content:'+'; font-size:1.1em; }
-  .icon-classes::before { content:'≡'; font-size:1em; }
-  .icon-help::before    { content:'?'; font-size:1em; font-weight:700; }
-  .icon-profile::before { content:'○'; font-size:0.9em; }
-  .icon-settings::before{ content:'◈'; font-size:0.9em; }
+  /* SVG icon masks */
+  .icon-menu    { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z'/%3E%3C/svg%3E"); }
+  .icon-build   { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z'/%3E%3C/svg%3E"); }
+  .icon-classes { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z'/%3E%3C/svg%3E"); }
+  .icon-help    { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M192,96c0,28.51-24.47,52.11-56,55.56V160a8,8,0,0,1-16,0V144a8,8,0,0,1,8-8c26.47,0,48-17.94,48-40s-21.53-40-48-40S80,73.94,80,96a8,8,0,0,1-16,0c0-30.88,28.71-56,64-56S192,65.12,192,96Zm-64,96a16,16,0,1,0,16,16A16,16,0,0,0,128,192Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M192,96c0,28.51-24.47,52.11-56,55.56V160a8,8,0,0,1-16,0V144a8,8,0,0,1,8-8c26.47,0,48-17.94,48-40s-21.53-40-48-40S80,73.94,80,96a8,8,0,0,1-16,0c0-30.88,28.71-56,64-56S192,65.12,192,96Zm-64,96a16,16,0,1,0,16,16A16,16,0,0,0,128,192Z'/%3E%3C/svg%3E"); }
+  .icon-profile { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232.7,50.48C229,45.7,221.84,40,209,40c-16.85,0-38.46,11.28-57.81,30.16A140.07,140.07,0,0,0,136,87.53V56a8,8,0,0,0-16,0V87.53a140.07,140.07,0,0,0-15.15-17.37C85.49,51.28,63.88,40,47,40,34.16,40,27,45.7,23.3,50.48c-6.82,8.77-12.18,24.08-.21,71.2,6.05,23.83,19.51,33,30.63,36.42A44,44,0,0,0,128,205.27a44,44,0,0,0,74.28-47.17c11.12-3.4,24.57-12.59,30.63-36.42C239.63,95.24,244.85,66.1,232.7,50.48ZM92,208A28.12,28.12,0,0,1,88.86,152a8,8,0,1,0-1.76-15.9A43.64,43.64,0,0,0,66.36,144c-8.43.09-22-3.57-27.76-26.26C35.72,106.39,27,71.86,35.94,60.3,37.37,58.46,40.09,56,47,56c27.27,0,73,44.88,73,71.67V180A28,28,0,0,1,92,208ZM217.4,117.74c-5.77,22.69-19.33,26.34-27.77,26.26a43.6,43.6,0,0,0-20.74-7.95,8,8,0,1,0-1.76,15.9A28.11,28.11,0,1,1,136,180V127.67C136,100.88,181.69,56,209,56c6.95,0,9.66,2.46,11.1,4.3C229.05,71.86,220.28,106.39,217.4,117.74Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M232.7,50.48C229,45.7,221.84,40,209,40c-16.85,0-38.46,11.28-57.81,30.16A140.07,140.07,0,0,0,136,87.53V56a8,8,0,0,0-16,0V87.53a140.07,140.07,0,0,0-15.15-17.37C85.49,51.28,63.88,40,47,40,34.16,40,27,45.7,23.3,50.48c-6.82,8.77-12.18,24.08-.21,71.2,6.05,23.83,19.51,33,30.63,36.42A44,44,0,0,0,128,205.27a44,44,0,0,0,74.28-47.17c11.12-3.4,24.57-12.59,30.63-36.42C239.63,95.24,244.85,66.1,232.7,50.48ZM92,208A28.12,28.12,0,0,1,88.86,152a8,8,0,1,0-1.76-15.9A43.64,43.64,0,0,0,66.36,144c-8.43.09-22-3.57-27.76-26.26C35.72,106.39,27,71.86,35.94,60.3,37.37,58.46,40.09,56,47,56c27.27,0,73,44.88,73,71.67V180A28,28,0,0,1,92,208ZM217.4,117.74c-5.77,22.69-19.33,26.34-27.77,26.26a43.6,43.6,0,0,0-20.74-7.95,8,8,0,1,0-1.76,15.9A28.11,28.11,0,1,1,136,180V127.67C136,100.88,181.69,56,209,56c6.95,0,9.66,2.46,11.1,4.3C229.05,71.86,220.28,106.39,217.4,117.74Z'/%3E%3C/svg%3E"); }
+  .icon-settings{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z'/%3E%3C/svg%3E"); }
+  .icon-announce{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z'/%3E%3C/svg%3E"); }
+  .icon-prev    { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM149.66,93.66,115.31,128l34.35,34.34a8,8,0,0,1-11.32,11.32l-40-40a8,8,0,0,1,0-11.32l40-40a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM149.66,93.66,115.31,128l34.35,34.34a8,8,0,0,1-11.32,11.32l-40-40a8,8,0,0,1,0-11.32l40-40a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E"); }
+  .icon-next    { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z'/%3E%3C/svg%3E"); }
+  /* close/drag still use text until custom SVGs are provided */
+  .icon-close::before { content:'×'; font-size:1.1em; }
+  .icon-drag::before  { content:'⋮'; font-size:1em; letter-spacing:-2px; }
+  .icon-close, .icon-drag { background-color:transparent; }
   input, select, textarea{ font-size:16px; }
   #app{min-height:100%; display:flex; flex-direction:column;}
 
@@ -92,7 +120,7 @@
   .drawer-item.active-screen{color:var(--accent); font-weight:600;}
   .drawer-item .drawer-icon{width:24px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
   .drawer-run-btn{width:calc(100% - 32px); margin:12px 16px 4px; background:var(--accent);
-    border:none; color:#0a0a0a; border-radius:14px; padding:16px; font-size:16px; font-weight:700;
+    border:none; color:var(--bg); border-radius:14px; padding:16px; font-size:16px; font-weight:700;
     cursor:pointer; font-family:var(--sans); display:flex; align-items:center; justify-content:center;
     gap:8px; min-height:52px; letter-spacing:.02em; -webkit-tap-highlight-color:transparent;}
   .drawer-run-btn:active{opacity:.85;}
@@ -162,8 +190,8 @@
   .btn{background:transparent; border:1px solid var(--line); color:var(--text);
     padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:.01em;}
   .btn:active{transform:scale(.97);}
-  .btn.primary{background:var(--accent); border-color:var(--accent); color:#0a0a0a;}
-  .btn.good{background:var(--text); border-color:var(--text); color:#0a0a0a;}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:var(--bg);}
+  .btn.good{background:var(--accent); border-color:var(--accent); color:var(--bg);}
   .btn.ghost{background:transparent;}
   .btn.small{padding:8px 14px; font-size:11px; border-radius:999px; min-height:34px;}
   .btn.danger{color:var(--danger); border-color:#4a3a34;}
@@ -219,7 +247,7 @@
   .format-toggle{display:flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; flex:0 0 auto;}
   .format-btn{background:transparent; border:none; color:var(--muted); padding:8px 14px; font-size:11px;
     font-weight:700; letter-spacing:.04em; cursor:pointer;}
-  .format-btn.active{background:var(--accent); color:#0a0a0a;}
+  .format-btn.active{background:var(--accent); color:var(--bg);}
 
   /* ---- STICKY BOTTOM ACTION BAR ---- */
   .bottom-action-bar{position:fixed; bottom:0; left:0; right:0; z-index:50;
@@ -312,7 +340,7 @@
   .combo-option{display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--text);
     padding:10px 12px; border-radius:8px; font-size:14px; cursor:pointer; font-family:var(--sans);}
   .combo-option:active{background:var(--panel2);}
-  .combo-option.active{background:var(--accent); color:#0a0a0a;}
+  .combo-option.active{background:var(--accent); color:var(--bg);}
 
   .save-status{font-size:12px; color:var(--muted); align-self:center;}
   .lib-status{font-size:12px; color:var(--muted); margin-bottom:10px;}
@@ -347,12 +375,12 @@
     letter-spacing:.14em; text-transform:uppercase; margin-top:6px; border:1px solid var(--line);
     cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;}
   .type-pill:active{transform:scale(.96);}
-  .type-pill.work{background:var(--text); color:#0a0a0a; border-color:var(--text);}
+  .type-pill.work{background:var(--text); color:var(--bg); border-color:var(--text);}
   .type-pill.rest{background:transparent; color:var(--muted); border-color:var(--line);}
-  .type-pill.done{background:var(--text); color:#0a0a0a; border-color:var(--text);}
+  .type-pill.done{background:var(--text); color:var(--bg); border-color:var(--text);}
 
-  .timer{font-size:120px; font-weight:400; font-family:var(--serif); line-height:1; font-variant-numeric:tabular-nums;
-    transition:color .2s, opacity .2s; user-select:none;}
+  .timer{font-size:120px; font-weight:400; font-family:var(--display); line-height:1; font-variant-numeric:tabular-nums;
+    letter-spacing:.02em; transition:color .2s, opacity .2s; user-select:none;}
   .timer.paused{opacity:0.35;}
   .timer-row{display:flex; align-items:center; justify-content:center; gap:14px; margin:10px 0 4px;}
   .time-adj{display:flex; gap:10px; justify-content:center; margin-bottom:6px;}
@@ -418,7 +446,7 @@
   .controls{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;}
   .ctl-btn{background:transparent; border:1px solid var(--line); color:var(--text);
     padding:16px 22px; border-radius:999px; font-size:14px; font-weight:600; cursor:pointer; min-width:64px;}
-  .ctl-btn.play{background:var(--text); border-color:var(--text); color:#0a0a0a; padding:16px 38px;}
+  .ctl-btn.play{background:var(--text); border-color:var(--text); color:var(--bg); padding:16px 38px;}
   .ctl-btn:active{transform:scale(.96);}
 
   .setup-screen{display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px 20px; text-align:center;}
@@ -638,7 +666,7 @@
     <!-- RUNNER -->
     <div id="screenRun" class="hidden">
       <div class="msg-modal-btn">
-        <button type="button" onclick="openMessageModal()">📋 Message &amp; Phrases</button>
+        <button type="button" onclick="openMessageModal()" style="display:inline-flex;align-items:center;gap:8px;"><span class="icon icon-announce" style="width:18px;height:18px;flex-shrink:0;"></span> Message &amp; Phrases</button>
       </div>
 
       <!-- Message modal — rendered as bottom sheet, timer keeps running -->
