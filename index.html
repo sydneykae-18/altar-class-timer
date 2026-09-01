@@ -424,6 +424,19 @@
   .setup-screen{display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px 20px; text-align:center;}
   .setup-screen h2{margin:0; font-size:26px; font-family:var(--serif); font-weight:400;}
   .setup-screen p{color:var(--muted); font-size:14px; max-width:360px; margin:0;}
+  /* Volume slider */
+  .vol-slider-wrap{display:flex; align-items:center; gap:10px; width:100%;}
+  .vol-label-lo,.vol-label-hi{font-size:11px; color:var(--muted); flex-shrink:0;}
+  .vol-slider{flex:1; -webkit-appearance:none; appearance:none; height:4px; border-radius:2px;
+    background:var(--line); outline:none; cursor:pointer;}
+  .vol-slider::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+    background:var(--accent); cursor:pointer; border:none;}
+  .vol-slider::-moz-range-thumb{width:22px; height:22px; border-radius:50%;
+    background:var(--accent); cursor:pointer; border:none;}
+  /* In-run sound panel below End Class */
+  .run-sound-panel{margin-top:20px; padding-top:20px; border-top:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:14px; width:100%;}
+  .run-sound-panel .sound-setting-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; width:100%; text-align:center;}
   .sound-settings-panel{width:100%; max-width:360px; display:flex; flex-direction:column; gap:12px;
     margin-top:18px; padding-top:18px; border-top:1px solid var(--line);}
   .sound-setting-row{display:flex; align-items:center; gap:12px;}
@@ -512,9 +525,6 @@
       <span id="drawerUserName">—</span>
     </div>
     <button class="drawer-close" onclick="closeDrawer()"><span class="icon icon-close"></span></button>
-  </div>
-  <div class="drawer-section">
-    <button class="drawer-run-btn" onclick="drawerGo('run')">Run Class</button>
   </div>
   <div class="drawer-section">
     <button class="drawer-item" id="drawerItemEditor" onclick="drawerBuildNew()">
@@ -661,7 +671,12 @@
           </div>
           <div class="sound-setting-row">
             <span class="sound-setting-label">Volume</span>
-            <div class="format-toggle" id="volumeToggle"></div>
+            <div class="vol-slider-wrap" style="max-width:240px;">
+              <span class="vol-label-lo">0</span>
+              <input type="range" class="vol-slider" id="volumeSlider" min="0" max="100" step="1"
+                oninput="setVolume(this.value)" onchange="setVolume(this.value)">
+              <span class="vol-label-hi">100</span>
+            </div>
           </div>
         </div>
       </div>
@@ -678,8 +693,6 @@
           <button class="ctl-btn" onclick="addTime(-10)">-10s</button>
           <button class="ctl-btn" onclick="addTime(15)">+15s</button>
         </div>
-        <div class="format-toggle vol-quick-row" id="volQuickRow"></div>
-
         <div class="now-playing">
           <div class="now-playing-label">Now Playing</div>
           <div class="now-playing-title" id="movementName">—</div>
@@ -695,6 +708,18 @@
         </select>
 
         <button class="ctl-btn" style="margin-top:24px; color:var(--muted);" onclick="stopRun()">End Class</button>
+
+        <div class="run-sound-panel">
+          <span class="sound-setting-label">Sound</span>
+          <div class="format-toggle" id="runSoundProfileToggle"></div>
+          <span class="sound-setting-label">Volume</span>
+          <div class="vol-slider-wrap" style="max-width:280px; width:100%;">
+            <span class="vol-label-lo">0</span>
+            <input type="range" class="vol-slider" id="runVolumeSlider" min="0" max="100" step="1"
+              oninput="setVolume(this.value)" onchange="setVolume(this.value)">
+            <span class="vol-label-hi">100</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2179,32 +2204,26 @@ const SOUND_PROFILES = {
     rest(){ tone(600, 0.15, 0.3, 0); },
     end(){ tone(1200, 0.1, 0.4, 0); tone(1000, 0.1, 0.4, 0.18); tone(800, 0.2, 0.4, 0.36); },
   },
-  off: {
-    label: 'Off',
-    countdown(){}, go(){}, rest(){}, end(){},
-  },
 };
-
-const VOLUME_LEVELS = [
-  { key: 'mute', label: 'Mute', value: 0    },
-  { key: 'low',  label: 'Low',  value: 0.3  },
-  { key: 'med',  label: 'Med',  value: 0.65 },
-  { key: 'high', label: 'High', value: 1.0  },
-];
 
 function loadSoundSettings(){
   try{
     const p = localStorage.getItem(SOUND_PROFILE_KEY);
     if(SOUND_PROFILES[p]) currentSoundProfile = p;
-    const v = localStorage.getItem(BUZZER_VOL_KEY);
-    const found = VOLUME_LEVELS.find(l => l.key === v);
-    if(found){ currentVolLevel = v; buzzerVolume = found.value; }
+    const v = parseFloat(localStorage.getItem(BUZZER_VOL_KEY));
+    if(!isNaN(v) && v >= 0 && v <= 1){ buzzerVolume = v; }
+    // legacy key-based fallback
+    else {
+      const legacyMap = { mute:0, low:0.3, med:0.65, high:1.0 };
+      const lv = localStorage.getItem(BUZZER_VOL_KEY);
+      if(legacyMap[lv] !== undefined) buzzerVolume = legacyMap[lv];
+    }
   }catch(e){}
 }
 function saveSoundSettings(){
   try{
     localStorage.setItem(SOUND_PROFILE_KEY, currentSoundProfile);
-    localStorage.setItem(BUZZER_VOL_KEY, currentVolLevel);
+    localStorage.setItem(BUZZER_VOL_KEY, String(buzzerVolume));
   }catch(e){}
 }
 function pickSoundProfile(key){
@@ -2215,34 +2234,32 @@ function pickSoundProfile(key){
   ensureAudio();
   SOUND_PROFILES[key].go(); // preview
 }
-function pickVolumeLevel(key){
-  const found = VOLUME_LEVELS.find(l => l.key === key);
-  if(!found) return;
-  currentVolLevel = key;
-  buzzerVolume = found.value;
+function setVolume(val){
+  buzzerVolume = Math.max(0, Math.min(1, parseInt(val) / 100));
   saveSoundSettings();
   renderSoundSettings();
-  if(buzzerVolume > 0){ ensureAudio(); SOUND_PROFILES[currentSoundProfile].countdown(); } // preview
+  if(buzzerVolume > 0){ ensureAudio(); SOUND_PROFILES[currentSoundProfile].countdown(); }
 }
 function renderSoundSettings(){
+  const sliderVal = Math.round(buzzerVolume * 100);
+  // Pre-run sound panel
   const profileWrap = document.getElementById('soundProfileToggle');
   if(profileWrap){
     profileWrap.innerHTML = Object.entries(SOUND_PROFILES).map(([key, p]) =>
       `<button type="button" class="format-btn ${currentSoundProfile===key?'active':''}" onclick="pickSoundProfile('${key}')">${p.label}</button>`
     ).join('');
   }
-  const volWrap = document.getElementById('volumeToggle');
-  if(volWrap){
-    volWrap.innerHTML = VOLUME_LEVELS.map(l =>
-      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
+  const slider = document.getElementById('volumeSlider');
+  if(slider) slider.value = sliderVal;
+  // In-run sound panel
+  const runProfileWrap = document.getElementById('runSoundProfileToggle');
+  if(runProfileWrap){
+    runProfileWrap.innerHTML = Object.entries(SOUND_PROFILES).map(([key, p]) =>
+      `<button type="button" class="format-btn ${currentSoundProfile===key?'active':''}" onclick="pickSoundProfile('${key}')">${p.label}</button>`
     ).join('');
   }
-  const volQuick = document.getElementById('volQuickRow');
-  if(volQuick){
-    volQuick.innerHTML = VOLUME_LEVELS.map(l =>
-      `<button type="button" class="format-btn ${currentVolLevel===l.key?'active':''}" onclick="pickVolumeLevel('${l.key}')">${l.label}</button>`
-    ).join('');
-  }
+  const runSlider = document.getElementById('runVolumeSlider');
+  if(runSlider) runSlider.value = sliderVal;
 }
 
 /* ---------------------------------------------------------
@@ -2384,10 +2401,10 @@ function tone(freq, duration, vol, delay){
   osc.connect(gain); gain.connect(audioCtx.destination);
   osc.start(t0); osc.stop(t0 + duration + 0.02);
 }
-function beepCountdown(){ if(audioCtx) SOUND_PROFILES[currentSoundProfile].countdown(); }
-function buzzGo(){        if(audioCtx) SOUND_PROFILES[currentSoundProfile].go(); }
-function buzzRest(){      if(audioCtx) SOUND_PROFILES[currentSoundProfile].rest(); }
-function buzzEnd(){       if(audioCtx) SOUND_PROFILES[currentSoundProfile].end(); }
+function beepCountdown(){ ensureAudio(); SOUND_PROFILES[currentSoundProfile].countdown(); }
+function buzzGo(){        ensureAudio(); SOUND_PROFILES[currentSoundProfile].go(); }
+function buzzRest(){      ensureAudio(); SOUND_PROFILES[currentSoundProfile].rest(); }
+function buzzEnd(){       ensureAudio(); SOUND_PROFILES[currentSoundProfile].end(); }
 
 async function requestWake(){
   try{
