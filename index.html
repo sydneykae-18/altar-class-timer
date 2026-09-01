@@ -82,6 +82,7 @@
   .icon-next    { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm29.66-93.66a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32L140.69,128,106.34,93.66a8,8,0,0,1,11.32-11.32Z'/%3E%3C/svg%3E"); }
   /* delete icon (circle-X) */
   .icon-delete  { -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z'/%3E%3C/svg%3E"); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z'/%3E%3C/svg%3E"); }
+  .icon-calendar{ -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23000000%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20d%3D%22M208%2C32H184V24a8%2C8%2C0%2C0%2C0-16%2C0v8H88V24a8%2C8%2C0%2C0%2C0-16%2C0v8H48A16%2C16%2C0%2C0%2C0%2C32%2C48V208a16%2C16%2C0%2C0%2C0%2C16%2C16H208a16%2C16%2C0%2C0%2C0%2C16-16V48A16%2C16%2C0%2C0%2C0%2C208%2C32ZM72%2C48v8a8%2C8%2C0%2C0%2C0%2C16%2C0V48h80v8a8%2C8%2C0%2C0%2C0%2C16%2C0V48h24V80H48V48ZM208%2C208H48V96H208V208Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E"); mask-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23000000%22%20viewBox%3D%220%200%20256%20256%22%3E%3Cpath%20d%3D%22M208%2C32H184V24a8%2C8%2C0%2C0%2C0-16%2C0v8H88V24a8%2C8%2C0%2C0%2C0-16%2C0v8H48A16%2C16%2C0%2C0%2C0%2C32%2C48V208a16%2C16%2C0%2C0%2C0%2C16%2C16H208a16%2C16%2C0%2C0%2C0%2C16-16V48A16%2C16%2C0%2C0%2C0%2C208%2C32ZM72%2C48v8a8%2C8%2C0%2C0%2C0%2C16%2C0V48h80v8a8%2C8%2C0%2C0%2C0%2C16%2C0V48h24V80H48V48ZM208%2C208H48V96H208V208Z%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E"); }
   /* close/drag still use text until custom SVGs are provided */
   .icon-close::before { content:'×'; font-size:1.1em; }
   .icon-drag::before  { content:'⋮'; font-size:1em; letter-spacing:-2px; }
@@ -357,6 +358,13 @@
     color:var(--muted); font-size:12px; font-family:var(--sans); letter-spacing:.04em;
     cursor:pointer; padding:0 0 10px; -webkit-tap-highlight-color:transparent;}
   .run-back-btn:active{color:var(--text);}
+
+  .date-wrap{position:relative; display:flex; align-items:center;}
+  .date-wrap input[type="text"]{flex:1; padding-right:36px !important;}
+  .date-cal-btn{position:absolute; right:8px; background:none; border:none; cursor:pointer;
+    color:var(--muted); padding:4px; display:flex; align-items:center; -webkit-tap-highlight-color:transparent;}
+  .date-cal-btn:active{color:var(--text);}
+  .date-picker-hidden{position:absolute; opacity:0; pointer-events:none; width:0; height:0; top:0; left:0;}
 
   .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
   .meta-field{flex:1; min-width:130px;}
@@ -649,8 +657,14 @@
 
       <div class="meta-row">
         <div class="meta-field">
-          <label for="classDate">Date <span style="text-transform:none; letter-spacing:0;">(MM/DD/YYYY)</span></label>
-          <input type="text" id="classDate" placeholder="MM/DD/YYYY" inputmode="numeric" onchange="setDateField(this.value)">
+          <label for="classDate">Date</label>
+          <div class="date-wrap">
+            <input type="text" id="classDate" placeholder="MM/DD/YYYY" inputmode="numeric" onchange="setDateField(this.value)">
+            <button type="button" class="date-cal-btn" onclick="openDatePicker()" title="Pick a date">
+              <span class="icon icon-calendar" style="width:16px;height:16px;"></span>
+            </button>
+            <input type="date" id="classDatePicker" class="date-picker-hidden" onchange="onDatePickerChange(this.value)">
+          </div>
           <span class="field-hint" id="dateHint"></span>
         </div>
         <div class="meta-field">
@@ -1107,6 +1121,7 @@ function drawerBuildNew(){
   workout = ensureIds(newWorkout());
   save();
   renderEditor();
+  try{ document.getElementById('metaDetails').open = true; }catch(e){}
   showScreen('editor');
 }
 function openProfileFromDrawer(){
@@ -1633,6 +1648,7 @@ function renderEditor(){
   if(nameInputEl && document.activeElement !== nameInputEl) nameInputEl.value = workout.name;
   const dateInput = document.getElementById('classDate');
   if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
+  syncDatePicker(workout.date || '');
   renderClassTypeCombo();
   const instrInput = document.getElementById('classInstructor');
   // Auto-fill instructor from logged-in user when field is empty
@@ -1849,8 +1865,28 @@ function setDateField(val){
   }
   if(hintEl) hintEl.textContent = '';
   workout.date = val;
+  syncDatePicker(val);
   applyAutoTitle();
   save();
+}
+function syncDatePicker(mdy){
+  // Convert MM/DD/YYYY → YYYY-MM-DD for the native date input
+  const picker = document.getElementById('classDatePicker');
+  if(!picker || !mdy) return;
+  const parts = mdy.split('/');
+  if(parts.length === 3) picker.value = `${parts[2]}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+}
+function openDatePicker(){
+  const picker = document.getElementById('classDatePicker');
+  if(!picker) return;
+  try{ picker.showPicker(); }catch(e){ picker.focus(); picker.click(); }
+}
+function onDatePickerChange(val){
+  if(!val) return;
+  const [y,m,d] = val.split('-');
+  const formatted = `${m}/${d}/${y}`;
+  document.getElementById('classDate').value = formatted;
+  setDateField(formatted);
 }
 
 /* ---------------------------------------------------------
@@ -2000,6 +2036,7 @@ function buildNew(){
   if(workout.blocks.length && !confirm('Start a new class? This clears what you\'re currently building (save it first if you want to keep it).')) return;
   workout = ensureIds(newWorkout());
   save(); renderEditor();
+  try{ document.getElementById('metaDetails').open = true; }catch(e){}
 }
 function blockDuration(block){
   const per = block.steps.reduce((sum, s) => sum + ((s.work||0) + (s.rest||0)) * (s.sets||1), 0);
