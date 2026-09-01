@@ -27,31 +27,66 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:var(--sans);
     -webkit-tap-highlight-color:transparent; overscroll-behavior:none; height:100%;}
-  /* iOS auto-zooms the page when a focused input's font-size is under 16px — force 16px minimum
-     on every focusable text field/select so tapping into any of them never triggers that zoom. */
   input, select, textarea{ font-size:16px; }
   #app{min-height:100%; display:flex; flex-direction:column;}
-  header{display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:16px 18px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5;}
-  header h1{font-size:22px; margin:0; letter-spacing:.04em; font-family:var(--serif); font-weight:400; flex:0 0 auto;}
-  header h1 span{color:var(--muted); font-family:var(--sans); font-size:11px; font-weight:600;
-    letter-spacing:.18em; text-transform:uppercase; margin-left:8px; vertical-align:middle;}
-  .tabs{display:flex; gap:6px; flex:0 0 auto; max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
-  .tab{background:transparent; border:1px solid var(--line); color:var(--muted);
-    padding:8px 16px; border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.04em; cursor:pointer;
-    white-space:nowrap; min-height:36px; display:flex; align-items:center;}
-  .tab.active{color:#0a0a0a; background:var(--accent); border-color:var(--accent);}
-  main{flex:1; padding:16px; padding-bottom:40px; max-width:720px; margin:0 auto; width:100%;}
+
+  /* ---- HEADER ---- */
+  header{display:grid; grid-template-columns:48px 1fr 48px; align-items:center;
+    padding:12px 16px; padding-top:max(12px, env(safe-area-inset-top));
+    border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:10;}
+  header h1{font-size:20px; margin:0; letter-spacing:.04em; font-family:var(--serif); font-weight:400;
+    text-align:center; white-space:nowrap;}
+  header h1 span{color:var(--muted); font-family:var(--sans); font-size:10px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; margin-left:6px; vertical-align:middle;}
+  .hamburger-btn{background:none; border:none; color:var(--text); font-size:22px; cursor:pointer;
+    padding:8px; margin:-8px; width:48px; height:48px; display:flex; align-items:center; justify-content:center;
+    border-radius:10px; -webkit-tap-highlight-color:transparent;}
+  .hamburger-btn:active{background:var(--panel);}
+  /* Hidden tabs — kept for showScreen() active-class logic, not displayed */
+  .tabs{display:none;}
+  .tab{display:none;}
+
+  main{flex:1; padding:16px; padding-bottom:max(80px, calc(env(safe-area-inset-bottom) + 72px));
+    max-width:720px; margin:0 auto; width:100%;}
   .hidden{display:none !important;}
 
-  .whoami-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px;
+  /* ---- DRAWER ---- */
+  .drawer-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; cursor:pointer;}
+  .drawer{position:fixed; top:0; left:0; bottom:0; width:min(300px, 85vw); background:var(--bg);
+    border-right:1px solid var(--line); z-index:201; display:flex; flex-direction:column;
+    padding-top:env(safe-area-inset-top); transform:translateX(-100%); transition:transform .25s ease;
+    overflow-y:auto;}
+  .drawer.open{transform:translateX(0);}
+  .drawer-header{display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px 12px; border-bottom:1px solid var(--line);}
+  .drawer-header-name{font-family:var(--serif); font-size:18px; font-weight:400;}
+  .drawer-header-name small{display:block; font-family:var(--sans); font-size:11px;
+    color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-top:2px;}
+  .drawer-close{background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;
+    padding:6px; line-height:1; border-radius:8px;}
+  .drawer-close:active{background:var(--panel);}
+  .drawer-section{padding:10px 0;}
+  .drawer-section + .drawer-section{border-top:1px solid var(--line);}
+  .drawer-item{width:100%; background:none; border:none; color:var(--text); text-align:left;
+    padding:14px 24px; font-size:16px; font-family:var(--sans); cursor:pointer;
+    display:flex; align-items:center; gap:12px; min-height:52px; letter-spacing:.01em;}
+  .drawer-item:active{background:var(--panel);}
+  .drawer-item.active-screen{color:var(--accent); font-weight:600;}
+  .drawer-item .drawer-icon{font-size:18px; width:24px; text-align:center; flex-shrink:0;}
+  .drawer-run-btn{width:calc(100% - 32px); margin:12px 16px 4px; background:var(--accent);
+    border:none; color:#0a0a0a; border-radius:14px; padding:16px; font-size:16px; font-weight:700;
+    cursor:pointer; font-family:var(--sans); display:flex; align-items:center; justify-content:center;
+    gap:8px; min-height:52px; letter-spacing:.02em; -webkit-tap-highlight-color:transparent;}
+  .drawer-run-btn:active{opacity:.85;}
+
+  /* ---- WHOAMI BAR ---- */
+  .whoami-bar{display:flex; align-items:center; gap:10px; padding:8px 16px;
     border-bottom:1px solid var(--line); max-width:720px; margin:0 auto; width:100%; box-sizing:border-box;}
   .whoami-label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; flex:0 0 auto;}
-  .whoami-name{font-size:15px; font-weight:600; color:var(--text);}
+  .whoami-name{font-size:14px; font-weight:600; color:var(--text); flex:1;}
   .whoami-switch{font-size:12px; color:var(--accent); cursor:pointer; background:none; border:1px solid var(--accent);
     padding:4px 10px; border-radius:999px; line-height:1.4;}
-  .whoami-hint{font-size:11px; color:var(--muted); flex:1 1 200px;}
-  @media (max-width:480px){ .whoami-hint{display:none;} }
+  .whoami-hint{display:none;}
 
   /* ---- LOGIN OVERLAY ---- */
   .login-overlay{position:fixed; inset:0; background:var(--bg); z-index:1000;
@@ -100,14 +135,8 @@
   .admin-add-row input{flex:1; background:var(--panel); border:1px solid var(--line); color:var(--text);
     padding:8px 12px; border-radius:10px; font-size:14px;}
 
-  @media (max-width:400px){
-    header{padding:12px 14px;}
-    header h1{font-size:18px;}
-    header h1 span{display:none;}
-    .tab{padding:6px 11px; font-size:10.5px; min-height:32px;}
-  }
   @media (max-width:360px){
-    .tab{padding:6px 9px; font-size:10px;}
+    header h1{font-size:17px;}
   }
 
   /* ---- Editor ---- */
@@ -193,13 +222,53 @@
     font-weight:700; letter-spacing:.04em; cursor:pointer;}
   .format-btn.active{background:var(--accent); color:#0a0a0a;}
 
+  /* ---- STICKY BOTTOM ACTION BAR ---- */
+  .bottom-action-bar{position:fixed; bottom:0; left:0; right:0; z-index:50;
+    background:var(--bg); border-top:1px solid var(--line);
+    padding:10px 16px; padding-bottom:max(10px, env(safe-area-inset-bottom));
+    display:flex; gap:10px; max-width:720px; margin:0 auto;}
+  .bottom-action-bar .btn{flex:1; padding:13px 16px; font-size:14px;}
+
+  /* ---- MOBILE BUILD IMPROVEMENTS ---- */
+  @media (max-width:560px){
+    /* Stack title row: name full-width, buttons below */
+    .title-row{flex-direction:column; align-items:stretch; gap:8px;}
+    .title-row-actions{display:flex; gap:8px;}
+    .title-row-actions .btn{flex:1;}
+    /* Hide Indent/Outdent from RTE toolbar — too fiddly on mobile */
+    .rte-indent-btn{display:none;}
+    /* Two-row step layout: label full-width top, numbers below */
+    .step-row:not(.music-cols){
+      grid-template-columns:26px 1fr 1fr 1fr 26px;
+      grid-template-rows:auto auto;
+      row-gap:4px;
+    }
+    .step-row:not(.music-cols) > *:nth-child(1){grid-row:1; grid-column:1;}
+    .step-row:not(.music-cols) > *:nth-child(2){grid-row:1; grid-column:2/5;}
+    .step-row:not(.music-cols) > *:nth-child(3){grid-row:2; grid-column:2;}
+    .step-row:not(.music-cols) > *:nth-child(4){grid-row:2; grid-column:3;}
+    .step-row:not(.music-cols) > *:nth-child(5){grid-row:2; grid-column:4;}
+    .step-row:not(.music-cols) > *:nth-child(6){grid-row:1; grid-column:5;}
+    .step-row:not(.music-cols) input[type="number"]{padding:10px 2px; font-size:15px;}
+    /* Col-head to match */
+    .col-head:not(.music-cols){
+      grid-template-columns:26px 1fr 1fr 1fr 26px;
+      grid-template-rows:auto auto;
+      row-gap:0;
+    }
+    .col-head:not(.music-cols) > *:nth-child(1){grid-row:1; grid-column:1; visibility:hidden;}
+    .col-head:not(.music-cols) > *:nth-child(2){grid-row:1; grid-column:2/5; text-align:left;}
+    .col-head:not(.music-cols) > *:nth-child(3){grid-row:2; grid-column:2; text-align:center;}
+    .col-head:not(.music-cols) > *:nth-child(4){grid-row:2; grid-column:3; text-align:center;}
+    .col-head:not(.music-cols) > *:nth-child(5){grid-row:2; grid-column:4; text-align:center;}
+    .col-head:not(.music-cols) > *:nth-child(6){display:none;}
+  }
+
   @media (max-width:400px){
     main{padding:12px;}
     .block{padding:12px;}
-    .step-row, .col-head{grid-template-columns:20px minmax(0,1fr) 36px 44px 44px 20px; gap:4px;}
     .step-row.music-cols, .col-head.music-cols{grid-template-columns:20px 46px minmax(0,1fr) minmax(0,1fr) 20px;}
-    .step-row input[type="number"]{padding:8px 1px;}
-    .step-row .btn.icon-btn{width:20px; height:20px; font-size:11px;}
+    .step-row .btn.icon-btn{width:22px; height:22px; font-size:11px;}
     .lbl{font-size:8px;}
     .format-btn{padding:6px 10px; font-size:10px;}
   }
@@ -437,24 +506,59 @@
   </div>
 </div>
 
+<!-- DRAWER -->
+<div class="drawer-overlay hidden" id="drawerOverlay" onclick="closeDrawer()"></div>
+<nav class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-header-name">
+      <small>Logged in as</small>
+      <span id="drawerUserName">—</span>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-section">
+    <button class="drawer-run-btn" onclick="drawerGo('run')">▶ Run Class</button>
+  </div>
+  <div class="drawer-section">
+    <button class="drawer-item" id="drawerItemEditor" onclick="drawerGo('editor')">
+      <span class="drawer-icon">🏗</span> Build
+    </button>
+    <button class="drawer-item" id="drawerItemLibrary" onclick="drawerGo('library')">
+      <span class="drawer-icon">📚</span> Classes
+    </button>
+    <button class="drawer-item" id="drawerItemHelp" onclick="drawerGo('help')">
+      <span class="drawer-icon">❓</span> Help
+    </button>
+  </div>
+  <div class="drawer-section">
+    <button class="drawer-item" onclick="openProfileFromDrawer()">
+      <span class="drawer-icon">👤</span> Profile
+    </button>
+    <button class="drawer-item" onclick="openAdminFromDrawer()">
+      <span class="drawer-icon">⚙️</span> Admin
+    </button>
+  </div>
+</nav>
+
 <div id="app">
   <header>
+    <button class="hamburger-btn" onclick="openDrawer()" aria-label="Menu">☰</button>
     <h1>Altar<span>Class Timer</span></h1>
-    <div class="tabs">
-      <div class="tab active" id="tabEditor" onclick="showScreen('editor')">Build</div>
-      <div class="tab" id="tabRun" onclick="showScreen('run')">Run Class</div>
-      <div class="tab" id="tabLibrary" onclick="showScreen('library')">Classes</div>
-      <div class="tab" id="tabHelp" onclick="showScreen('help')">Help</div>
-      <div class="tab" id="tabAdmin" onclick="openAdminTab()">Admin</div>
+    <div></div><!-- spacer for grid centering -->
+    <!-- Hidden tabs kept for showScreen() active-class logic only -->
+    <div class="tabs" aria-hidden="true">
+      <div class="tab active" id="tabEditor"></div>
+      <div class="tab" id="tabRun"></div>
+      <div class="tab" id="tabLibrary"></div>
+      <div class="tab" id="tabHelp"></div>
+      <div class="tab" id="tabAdmin"></div>
     </div>
   </header>
 
   <div class="whoami-bar">
     <span class="whoami-label">You are:</span>
     <span class="whoami-name" id="whoamiName">—</span>
-    <button class="whoami-switch" onclick="openProfileModal()">Profile</button>
     <button class="whoami-switch" onclick="showLoginOverlay()">Switch</button>
-    <span class="whoami-hint">Tracks who created each class and controls delete permissions.</span>
   </div>
 
   <!-- PROFILE MODAL -->
@@ -524,8 +628,8 @@
           <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('bold')"><b>B</b></button>
           <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('italic')"><i>I</i></button>
           <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteCmd('insertUnorderedList')">• List</button>
-          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(1)">Indent →</button>
-          <button type="button" class="btn small ghost" onmousedown="event.preventDefault()" onclick="rteIndent(-1)">← Outdent</button>
+          <button type="button" class="btn small ghost rte-indent-btn" onmousedown="event.preventDefault()" onclick="rteIndent(1)">Indent →</button>
+          <button type="button" class="btn small ghost rte-indent-btn" onmousedown="event.preventDefault()" onclick="rteIndent(-1)">← Outdent</button>
         </div>
         <div id="classMessage" class="rte-editor" contenteditable="true"
           data-placeholder="Icebreaker, theme, motivational message for this class... Use • List, then Tab on a bullet for a sub-bullet."
@@ -746,6 +850,13 @@
     <span>Est. total class time</span>
     <span><b id="totalTime">0:00</b><span id="totalTarget" style="font-size:12px;"> / 45:00</span></span>
   </div>
+
+  <!-- Sticky bottom action bar — shown only on editor screen -->
+  <div class="bottom-action-bar hidden" id="bottomActionBar">
+    <button class="btn good" onclick="saveClass()">Save Class</button>
+    <button class="btn" onclick="startRun()" style="background:var(--panel); border:1px solid var(--line);">▶ Run Class</button>
+  </div>
+
   <footer class="hint">Tip: In Chrome on iPad/iPhone, tap the Share icon in the address bar → Add to Home Screen so this opens full-screen like an app during class.</footer>
 </div>
 
@@ -778,6 +889,8 @@ function setCurrentUser(name){
   try{ localStorage.setItem(CURRENT_USER_KEY, name || ''); }catch(e){}
   const el = document.getElementById('whoamiName');
   if(el) el.textContent = name || '—';
+  const drawerEl = document.getElementById('drawerUserName');
+  if(drawerEl) drawerEl.textContent = name || '—';
   renderLibrary();
   applyEditorPermissions();
 }
@@ -813,6 +926,41 @@ function getActiveInstructors(){
 --------------------------------------------------------- */
 let _pinEntry = '';
 let _pinTarget = '';
+
+/* ---------------------------------------------------------
+   DRAWER
+--------------------------------------------------------- */
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.remove('hidden');
+  // Update active highlight
+  const cur = _currentScreen || 'editor';
+  ['Editor','Library','Help'].forEach(s => {
+    const el = document.getElementById('drawerItem' + s);
+    if(el) el.classList.toggle('active-screen', cur === s.toLowerCase());
+  });
+  // Sync name
+  const nameEl = document.getElementById('drawerUserName');
+  if(nameEl) nameEl.textContent = getCurrentUser() || '—';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.add('hidden');
+}
+function drawerGo(screen){
+  closeDrawer();
+  showScreen(screen);
+}
+function openProfileFromDrawer(){
+  closeDrawer();
+  openProfileModal();
+}
+function openAdminFromDrawer(){
+  closeDrawer();
+  openAdminTab();
+}
+
+let _currentScreen = 'editor';
 
 function showLoginOverlay(){
   document.getElementById('loginOverlay').classList.remove('hidden');
@@ -1267,6 +1415,9 @@ function applyEditorPermissions(){
   screen.classList.toggle('editor-readonly', !editable);
   banner.classList.toggle('hidden', editable);
   if(!editable && ownerEl) ownerEl.textContent = workout.createdBy || 'Another instructor';
+  // Dim Save in sticky bar when readonly
+  const saveBtn = document.querySelector('#bottomActionBar .btn.good');
+  if(saveBtn){ saveBtn.style.opacity = editable ? '' : '0.4'; saveBtn.style.pointerEvents = editable ? '' : 'none'; }
 }
 function duplicateCurrentWorkout(){
   if(!workout) return;
@@ -1289,6 +1440,11 @@ function renderEditor(){
   if(document.activeElement !== dateInput) dateInput.value = workout.date || '';
   renderClassTypeCombo();
   const instrInput = document.getElementById('classInstructor');
+  // Auto-fill instructor from logged-in user when field is empty
+  if(!workout.instructor && getCurrentUser()){
+    workout.instructor = getCurrentUser();
+    save();
+  }
   if(document.activeElement !== instrInput) instrInput.value = workout.instructor || '';
   const descInput = document.getElementById('classDescription');
   if(document.activeElement !== descInput) descInput.value = workout.description || '';
@@ -1680,17 +1836,19 @@ function updateTotalBar(){
    SCREEN SWITCHING
 --------------------------------------------------------- */
 function showScreen(which){
-  document.getElementById('tabEditor').classList.toggle('active', which==='editor');
-  document.getElementById('tabRun').classList.toggle('active', which==='run');
-  document.getElementById('tabLibrary').classList.toggle('active', which==='library');
-  document.getElementById('tabHelp').classList.toggle('active', which==='help');
-  document.getElementById('tabAdmin').classList.toggle('active', which==='admin');
+  _currentScreen = which;
+  // Update drawer active states
+  ['Editor','Library','Help'].forEach(s => {
+    const el = document.getElementById('drawerItem' + s);
+    if(el) el.classList.toggle('active-screen', which === s.toLowerCase());
+  });
   document.getElementById('screenEditor').classList.toggle('hidden', which!=='editor');
   document.getElementById('screenRun').classList.toggle('hidden', which!=='run');
   document.getElementById('screenLibrary').classList.toggle('hidden', which!=='library');
   document.getElementById('screenHelp').classList.toggle('hidden', which!=='help');
   document.getElementById('screenAdmin').classList.toggle('hidden', which!=='admin');
   document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
+  document.getElementById('bottomActionBar').classList.toggle('hidden', which!=='editor');
   if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); renderSoundSettings(); }
   if(which==='library'){ refreshLibrary(); }
   if(which==='admin'){ renderAdminScreen(); }
@@ -2422,6 +2580,8 @@ function endRun(){
   const rawUser = getCurrentUser();
   const whoamiEl = document.getElementById('whoamiName');
   if(whoamiEl) whoamiEl.textContent = rawUser || '—';
+  const drawerEl = document.getElementById('drawerUserName');
+  if(drawerEl) drawerEl.textContent = rawUser || '—';
   const localDraft = load();
   await refreshLibrary(); // populates `library` from the cloud before deciding what to show
 
