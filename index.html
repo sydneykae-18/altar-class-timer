@@ -266,12 +266,18 @@
     font-weight:700; letter-spacing:.04em; cursor:pointer;}
   .format-btn.active{background:var(--accent); color:var(--bg);}
 
-  /* ---- STICKY BOTTOM ACTION BAR ---- */
-  .bottom-action-bar{position:fixed; bottom:0; left:0; right:0; z-index:50;
-    background:var(--bg); border-top:1px solid var(--line);
-    padding:10px 16px; padding-bottom:max(10px, env(safe-area-inset-bottom));
-    display:flex; gap:10px; max-width:720px; margin:0 auto;}
-  .bottom-action-bar .btn{flex:1; padding:13px 16px; font-size:14px;}
+  /* ---- UNIFIED EDITOR BOTTOM BAR ---- */
+  .editor-bar{position:fixed; bottom:0; left:0; right:0; z-index:50;
+    background:var(--bg); border-top:1px solid var(--line);}
+  .editor-bar-inner{max-width:720px; margin:0 auto; padding:8px 16px;
+    padding-bottom:max(8px, env(safe-area-inset-bottom));
+    display:flex; align-items:center; gap:12px;}
+  .bar-time{font-size:11px; color:var(--muted); flex:0 0 auto; white-space:nowrap; line-height:1.4;}
+  .bar-time b{display:block; font-size:15px; color:var(--text);}
+  .bar-time #totalTarget{font-size:11px;}
+  .editor-bar.over .bar-time b,.editor-bar.over #totalTarget{color:var(--danger);}
+  .bar-actions{display:flex; gap:10px; flex:1;}
+  .bar-actions .btn{flex:1; padding:11px 16px; font-size:14px;}
 
   /* ---- MOBILE BUILD IMPROVEMENTS ---- */
   @media (max-width:560px){
@@ -395,12 +401,6 @@
   .log-row-main{display:flex; gap:8px; align-items:baseline; flex-wrap:wrap;}
   .log-row-meta{font-size:12px; color:var(--muted); margin-top:2px;}
   #deletionLogPanel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:14px;}
-
-  .total-bar{position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
-    padding:10px 16px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted);}
-  .total-bar b{color:var(--text); font-size:16px;}
-  .total-bar.over #totalTime{color:var(--danger);}
-  .total-bar.over #totalTarget{color:var(--danger);}
 
   /* ---- Runner ---- */
   .runner{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding-top:6px;}
@@ -956,15 +956,15 @@
 
   </main>
 
-  <div class="total-bar" id="totalBar">
-    <span>Est. total class time</span>
-    <span><b id="totalTime">0:00</b><span id="totalTarget" style="font-size:12px;"> / 45:00</span></span>
-  </div>
-
-  <!-- Sticky bottom action bar — shown only on editor screen -->
-  <div class="bottom-action-bar hidden" id="bottomActionBar">
-    <button class="btn good" onclick="saveClass()">Save Class</button>
-    <button class="btn" onclick="showScreen('run')" style="background:var(--panel); border:1px solid var(--line);">Run Class</button>
+  <!-- Unified bottom bar — shown only on editor screen -->
+  <div class="editor-bar hidden" id="editorBar">
+    <div class="editor-bar-inner">
+      <span class="bar-time">Est. total class time<b id="totalTime">0:00</b><span id="totalTarget"> / 45:00</span></span>
+      <div class="bar-actions">
+        <button class="btn good" onclick="saveClass()">Save Class</button>
+        <button class="btn" onclick="showScreen('run')" style="background:var(--panel); border:1px solid var(--line);">Run Class</button>
+      </div>
+    </div>
   </div>
 
   <footer class="hint">Tip: In Chrome on iPad/iPhone, tap the Share icon in the address bar → Add to Home Screen so this opens full-screen like an app during class.</footer>
@@ -1607,7 +1607,7 @@ function canEditWorkout(){
 function applyEditorPermissions(){
   // Everyone can always edit — ownership only affects Save button label
   const editable = canEditWorkout();
-  const saveBtn = document.querySelector('#bottomActionBar .btn.good');
+  const saveBtn = document.querySelector('#editorBar .btn.good');
   if(saveBtn){
     saveBtn.textContent = editable ? 'Save Class' : 'Save as New';
     saveBtn.style.opacity = '';
@@ -2024,7 +2024,7 @@ function updateTotalBar(){
   const target = (workout.targetMinutes || 45) * 60;
   document.getElementById('totalTime').textContent = fmtTime(total);
   document.getElementById('totalTarget').textContent = ' / ' + fmtTime(target);
-  document.getElementById('totalBar').classList.toggle('over', total > target);
+  document.getElementById('editorBar').classList.toggle('over', total > target);
 }
 
 /* ---------------------------------------------------------
@@ -2043,8 +2043,7 @@ function showScreen(which){
   document.getElementById('screenHelp').classList.toggle('hidden', which!=='help');
   document.getElementById('screenAdmin').classList.toggle('hidden', which!=='admin');
   document.getElementById('screenProfile').classList.toggle('hidden', which!=='profile');
-  document.getElementById('totalBar').classList.toggle('hidden', which!=='editor');
-  document.getElementById('bottomActionBar').classList.toggle('hidden', which!=='editor');
+  document.getElementById('editorBar').classList.toggle('hidden', which!=='editor');
   if(which==='run'){ prepareRunSummary(); renderMessageDrawer(); setupRunModeUI(); renderSoundSettings(); }
   if(which==='library'){ refreshLibrary(); }
   if(which==='admin'){ renderAdminScreen(); }
@@ -2541,7 +2540,7 @@ function startRun(){
   running = true;
   document.getElementById('runSetup').classList.add('hidden');
   document.getElementById('runActive').classList.remove('hidden');
-  document.getElementById('totalBar').classList.add('hidden');
+  document.getElementById('editorBar').classList.add('hidden');
   populateJumpSelect();
   buzzGo();
   renderRunFrame();
