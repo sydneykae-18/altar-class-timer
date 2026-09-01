@@ -2045,7 +2045,7 @@ function renderLibrary(){
       <div class="class-card-main">
         <div class="class-card-date">${escapeAttr(cls.date || 'No date')}</div>
         <div class="class-card-name">${escapeAttr(cls.name || 'Untitled class')}</div>
-        <div class="class-card-meta">${escapeAttr(type)} · ${escapeAttr(shortInstructorName(cls.instructor) || '—')} · created by ${escapeAttr(shortInstructorName(cls.createdBy) || 'Unknown')}</div>
+        <div class="class-card-meta">${escapeAttr(type)} · Created by ${escapeAttr(shortInstructorName(cls.createdBy) || shortInstructorName(cls.instructor) || 'Unknown')}</div>
         ${cls.description ? `<div class="class-card-desc">${escapeAttr(cls.description)}</div>` : ''}
       </div>
       <div class="class-card-actions">
