@@ -28,23 +28,28 @@
     --sans:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --display:"Bebas Neue", Impact, sans-serif;
   }
+  /* Light mode — system preference (when no manual override) */
   @media(prefers-color-scheme:light){
-    :root{
-      --bg:#F7F6F2;
-      --panel:#FFFFFF;
-      --panel2:#EDE9E3;
-      --line:#D8CCBA;
-      --text:#0B0B0A;
-      --text2:#3D3C39;
-      --muted:#A7A49D;
-      --accent:#687C60;
-      --sand:#D8CCBA;
-      --gold:#D6B77A;
-      --work:#0B0B0A;
-      --rest:#A7A49D;
-      --good:#687C60;
-      --danger:#B5503E;
+    html:not([data-theme="dark"]){
+      --bg:#F7F6F2; --panel:#FFFFFF; --panel2:#EDE9E3; --line:#D8CCBA;
+      --text:#0B0B0A; --text2:#3D3C39; --muted:#A7A49D; --accent:#687C60;
+      --sand:#D8CCBA; --gold:#D6B77A; --work:#0B0B0A; --rest:#A7A49D;
+      --good:#687C60; --danger:#B5503E;
     }
+  }
+  /* Light mode — manual override */
+  html[data-theme="light"]{
+    --bg:#F7F6F2; --panel:#FFFFFF; --panel2:#EDE9E3; --line:#D8CCBA;
+    --text:#0B0B0A; --text2:#3D3C39; --muted:#A7A49D; --accent:#687C60;
+    --sand:#D8CCBA; --gold:#D6B77A; --work:#0B0B0A; --rest:#A7A49D;
+    --good:#687C60; --danger:#B5503E;
+  }
+  /* Dark mode — manual override (forces dark even on light-system devices) */
+  html[data-theme="dark"]{
+    --bg:#0B0B0A; --panel:#1A1A18; --panel2:#242421; --line:#2E2E2B;
+    --text:#F7F6F2; --text2:#D8CCBA; --muted:#A7A49D; --accent:#687C60;
+    --sand:#D8CCBA; --gold:#D6B77A; --work:#F7F6F2; --rest:#A7A49D;
+    --good:#687C60; --danger:#C0695A;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
@@ -198,12 +203,12 @@
   .btn.small{padding:8px 14px; font-size:11px; border-radius:999px; min-height:34px;}
   .btn.danger{color:var(--danger); border-color:#4a3a34;}
   .btn.icon-btn{width:26px; height:26px; padding:0; display:flex; align-items:center; justify-content:center;
-    font-size:13px; line-height:1; position:relative;}
+    font-size:13px; line-height:1; position:relative; border:none; background:transparent;}
   .btn.icon-btn::after{content:''; position:absolute; inset:-7px;}
 
   .title-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:2px;}
   .workout-name{flex:1 1 220px; min-width:0; font-size:20px; font-weight:400; font-family:var(--serif); background:transparent; border:none;
-    color:var(--text); border-bottom:1px dashed var(--line); padding:4px 2px;}
+    color:var(--text); border-bottom:1px dashed var(--line); padding:4px 2px; line-height:1.2;}
   .workout-name:focus{outline:none; border-bottom-color:var(--accent);}
   .workout-name::placeholder{font-size:15px; font-family:var(--sans); color:var(--muted);}
   .title-row-actions{display:flex; gap:8px; flex:0 0 auto;}
@@ -274,6 +279,7 @@
       grid-template-columns:26px 1fr 1fr 1fr 26px;
       grid-template-rows:auto auto;
       row-gap:6px;
+      margin-right:6px; /* keep delete icon clear of block's border-radius */
     }
     .step-row:not(.music-cols) > *:nth-child(1){grid-row:1; grid-column:1;}
     .step-row:not(.music-cols) > *:nth-child(2){grid-row:1; grid-column:2/5;}
@@ -285,7 +291,7 @@
   }
 
   @media (max-width:400px){
-    main{padding:12px;}
+    main{padding:4px 12px 12px;}
     .block{padding:12px;}
     .step-row.music-cols, .col-head.music-cols{grid-template-columns:20px 46px minmax(0,1fr) minmax(0,1fr) 20px;}
     .step-row .btn.icon-btn{width:22px; height:22px; font-size:11px;}
@@ -566,6 +572,12 @@
     </button>
     <button class="drawer-item" onclick="openAdminFromDrawer()">
       <span class="drawer-icon"><span class="icon icon-settings"></span></span> Admin
+    </button>
+  </div>
+  <div class="drawer-section">
+    <button class="drawer-item" id="themeToggleBtn" onclick="toggleTheme()">
+      <span class="drawer-icon" id="themeToggleIcon" style="font-size:16px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">◑</span>
+      <span id="themeToggleLabel">Light Mode</span>
     </button>
   </div>
 </nav>
@@ -935,6 +947,37 @@ const PINS_KEY         = 'altarPins';
 const INSTRUCTORS_KEY  = 'altarInstructors';
 const ADMIN_PW         = 'altaradmin';
 const DEFAULT_PIN      = '0000';
+const THEME_KEY        = 'altarTheme';
+
+/* ---- Theme ---- */
+(function initTheme(){
+  const stored = localStorage.getItem(THEME_KEY);
+  if(stored) document.documentElement.setAttribute('data-theme', stored);
+})();
+
+function getEffectiveTheme(){
+  const manual = document.documentElement.getAttribute('data-theme');
+  if(manual) return manual;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function toggleTheme(){
+  const current = getEffectiveTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem(THEME_KEY, next); }catch(e){}
+  updateThemeButton();
+  closeDrawer();
+}
+
+function updateThemeButton(){
+  const label = document.getElementById('themeToggleLabel');
+  const icon  = document.getElementById('themeToggleIcon');
+  if(!label) return;
+  const isDark = getEffectiveTheme() === 'dark';
+  label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  icon.textContent  = isDark ? '○' : '●';
+}
 
 /* ---------------------------------------------------------
    CURRENT USER + PIN AUTH
@@ -999,6 +1042,7 @@ function openDrawer(){
   // Sync name
   const nameEl = document.getElementById('drawerUserName');
   if(nameEl) nameEl.textContent = getCurrentUser() || '—';
+  updateThemeButton();
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
