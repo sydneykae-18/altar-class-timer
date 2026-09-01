@@ -1074,7 +1074,7 @@ function setPinFor(name, pin){
   try{ localStorage.setItem(PINS_KEY, JSON.stringify(pins)); }catch(e){}
 }
 
-// Instructor list — falls back to hardcoded INSTRUCTORS if not customized
+// Instructor list — localStorage cache, backed by Vercel KV
 function getInstructorList(){
   try{
     const stored = localStorage.getItem(INSTRUCTORS_KEY);
@@ -1084,9 +1084,39 @@ function getInstructorList(){
 }
 function saveInstructorList(list){
   try{ localStorage.setItem(INSTRUCTORS_KEY, JSON.stringify(list)); }catch(e){}
+  // Sync to KV so all devices stay current
+  fetch('/api/instructors', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ instructors: list })
+  }).catch(()=>{});
 }
 function getActiveInstructors(){
   return getInstructorList() || [...INSTRUCTORS];
+}
+// On load, pull instructor list from KV, merge with hardcoded list, and cache locally
+async function syncInstructorsFromKV(){
+  try{
+    const res = await fetch('/api/instructors');
+    const data = await res.json();
+    const kvList = Array.isArray(data.instructors) ? data.instructors : [];
+    // Merge: start with KV list, add any hardcoded names missing from it
+    const merged = [...kvList];
+    INSTRUCTORS.forEach(name => { if(!merged.includes(name)) merged.push(name); });
+    merged.sort((a,b) => a.localeCompare(b));
+    // If merge added anything new, write back to KV so all devices get the update
+    const needsWrite = merged.length > kvList.length;
+    try{ localStorage.setItem(INSTRUCTORS_KEY, JSON.stringify(merged)); }catch(e){}
+    if(needsWrite){
+      fetch('/api/instructors', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ instructors: merged })
+      }).catch(()=>{});
+    }
+    populateStaticOptions();
+    renderAdminInstructors();
+  }catch(e){}
 }
 
 /* ---------------------------------------------------------
@@ -1401,8 +1431,8 @@ const CLASS_TYPES = CLASS_TYPE_OPTIONS.map(o => o.value);
 
 const INSTRUCTORS = [
   "Ally White", "April Alford", "Audri Saylors", "Chloe Riddle", "Courtland Olson",
-  "Kaleigh Molgaard", "Kenna Lightle", "Krysta Winkelmann", "Madison Combs",
-  "Sydney Wilhelms", "Vern Davis",
+  "Janon Tufte", "Kaleigh Molgaard", "Kenna Lightle", "Krysta Winkelmann", "Madison Combs",
+  "Monica Stoney", "Sydney Wilhelms", "Vern Davis",
 ].sort((a, b) => a.localeCompare(b));
 // Display-only short form — "Sydney Wilhelms" -> "Sydney W." — used
 // everywhere an instructor name is shown or picked, since full last names
@@ -2808,6 +2838,7 @@ function endRun(){
 (async function init(){
   loadSoundSettings();
   populateStaticOptions();
+  syncInstructorsFromKV(); // async — updates dropdowns once KV responds
   // Set the whoami display from stored user
   const rawUser = getCurrentUser();
   const whoamiEl = document.getElementById('whoamiName');
