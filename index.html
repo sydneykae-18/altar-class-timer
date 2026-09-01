@@ -578,10 +578,8 @@
   <main>
     <!-- EDITOR -->
     <div id="screenEditor">
-      <div id="readonlyBanner" class="readonly-banner hidden">
-        <button class="btn small" onclick="duplicateCurrentWorkout()">Duplicate to Edit</button>
-        <span id="readonlyOwnerName" style="display:none"></span>
-      </div>
+      <span id="readonlyBanner" style="display:none"></span>
+      <span id="readonlyOwnerName" style="display:none"></span>
       <div class="title-row">
         <input class="workout-name" id="workoutName" placeholder="Auto-fills from date + class type — or type your own" value="" oninput="onNameChange()">
       </div>
@@ -884,7 +882,7 @@
   <!-- Sticky bottom action bar — shown only on editor screen -->
   <div class="bottom-action-bar hidden" id="bottomActionBar">
     <button class="btn good" onclick="saveClass()">Save Class</button>
-    <button class="btn" onclick="startRun()" style="background:var(--panel); border:1px solid var(--line);">Run Class</button>
+    <button class="btn" onclick="showScreen('run')" style="background:var(--panel); border:1px solid var(--line);">Run Class</button>
   </div>
 
   <footer class="hint">Tip: In Chrome on iPad/iPhone, tap the Share icon in the address bar → Add to Home Screen so this opens full-screen like an app during class.</footer>
