@@ -325,6 +325,27 @@
   .target-row label{font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase;}
   .target-row span.unit{font-size:12px; color:var(--muted);}
 
+  /* ---- COLLAPSIBLE META SECTION ---- */
+  .meta-details{margin-bottom:12px;}
+  .meta-details summary{display:flex; align-items:center; gap:7px; cursor:pointer;
+    font-size:11px; color:var(--muted); letter-spacing:.07em; text-transform:uppercase;
+    padding:6px 0 8px; list-style:none; -webkit-tap-highlight-color:transparent; user-select:none;}
+  .meta-details summary::-webkit-details-marker{display:none;}
+  .meta-details summary .meta-caret{display:inline-block; width:14px; height:14px;
+    background-color:var(--muted); flex-shrink:0;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E");
+    -webkit-mask-size:contain; mask-size:contain; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    transition:transform .2s;}
+  .meta-details[open] summary .meta-caret{transform:rotate(180deg);}
+  .meta-details summary:active{color:var(--text2);}
+
+  /* ---- BACK BUTTON (run screen) ---- */
+  .run-back-btn{display:flex; align-items:center; gap:7px; background:none; border:none;
+    color:var(--muted); font-size:12px; font-family:var(--sans); letter-spacing:.04em;
+    cursor:pointer; padding:0 0 10px; -webkit-tap-highlight-color:transparent;}
+  .run-back-btn:active{color:var(--text);}
+
   .meta-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
   .meta-field{flex:1; min-width:130px;}
   .meta-field label{display:block; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;}
@@ -617,6 +638,9 @@
       </div>
       <div class="save-status-row"><span class="save-status" id="saveStatus"></span></div>
 
+      <details class="meta-details" id="metaDetails" ontoggle="try{localStorage.setItem('metaOpen',this.open)}catch(e){}">
+        <summary><span class="meta-caret"></span>Class details</summary>
+
       <div class="meta-row">
         <div class="meta-field">
           <label for="classDate">Date <span style="text-transform:none; letter-spacing:0;">(MM/DD/YYYY)</span></label>
@@ -665,6 +689,8 @@
         <span class="unit">min</span>
       </div>
 
+      </details><!-- end meta-details -->
+
       <div class="toolbar" id="toolbarTop">
         <button class="btn primary" onclick="addBlock()">+ Add Block</button>
       </div>
@@ -678,6 +704,9 @@
 
     <!-- RUNNER -->
     <div id="screenRun" class="hidden">
+      <button class="run-back-btn" onclick="showScreen('editor')" title="Back to Build">
+        <span class="icon icon-prev" style="width:16px;height:16px;"></span>Back to Build
+      </button>
       <div class="msg-modal-btn">
         <button type="button" onclick="openMessageModal()" style="display:inline-flex;align-items:center;gap:8px;"><span class="icon icon-announce" style="width:18px;height:18px;flex-shrink:0;"></span> Message &amp; Phrases</button>
       </div>
@@ -959,6 +988,14 @@ const THEME_KEY        = 'altarTheme';
 (function initTheme(){
   const stored = localStorage.getItem(THEME_KEY);
   if(stored) document.documentElement.setAttribute('data-theme', stored);
+})();
+
+/* ---- Restore meta-details open state (default closed) ---- */
+(function initMeta(){
+  try{
+    const el = document.getElementById('metaDetails');
+    if(el) el.open = localStorage.getItem('metaOpen') === 'true';
+  }catch(e){}
 })();
 
 function getEffectiveTheme(){
